@@ -1,0 +1,25 @@
+{
+  "name": "corners-ai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/esbuild src/index.ts --bundle --outdir=dist",
+    "build:watch": "./node_modules/.bin/esbuild src/index.ts --bundle --outdir=dist --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bulmenisaurus/corners-ai.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bulmenisaurus/corners-ai/issues"
+  },
+  "homepage": "https://github.com/Bulmenisaurus/corners-ai#readme",
+  "dependencies": {
+    "esbuild": "0.17.10"
+  }
+}
