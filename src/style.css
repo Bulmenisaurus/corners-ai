@@ -30,20 +30,38 @@ main {
     background-color: #b58863;
 }
 
+#board-container .tile.black[data-selected='true'] {
+    background-color: #8a6241;
+}
+
 #board-container .tile.white {
     background-color: #f0d9b5;
+}
+
+#board-container .tile.white[data-selected='true'] {
+    background-color: #e3b875;
 }
 
 #board-container .piece {
     width: 70%;
     height: 70%;
     border-radius: 100%;
-    border: 5px solid black;
+    border: 5px solid;
 }
 
-#board-container .piece.black {
-    background-color: black;
+#board-container :is(.piece, .tile) {
+    pointer-events: none;
 }
-#board-container .piece.white {
+
+#board-container .piece[data-piece-type='black'] {
+    background-color: black;
+    border-color: black;
+}
+#board-container .piece[data-piece-type='white'] {
     background-color: white;
+    border-color: black;
+}
+
+#board-container .piece[data-piece-type='none'] {
+    display: none;
 }
