@@ -178,8 +178,8 @@ export class InteractiveBoard {
         const pieceToMove = this.board.getPiece(startX, startY);
         this.setPiece(startX, startY, PIECE_NONE);
         this.setPiece(endX, endY, pieceToMove);
-        const moveAudio = new Audio('./audio/wood-sound.mp3');
-        moveAudio.play();
+        // const moveAudio = new Audio('./audio/wood-sound.mp3');
+        // moveAudio.play();
     }
 }
 
