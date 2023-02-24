@@ -1,6 +1,6 @@
 import { Board, PIECE_NONE } from './board';
 
-interface Move {
+export interface Move {
     fromX: number;
     fromY: number;
     toX: number;
@@ -119,12 +119,14 @@ const recursiveSearchMoves = (
         }
     }
 
-    // or, can just stop here and settle down
-    const newMove: Move = window.structuredClone(currentMoveData);
-    newMove.toX = pieceX;
-    newMove.toY = pieceY;
+    // or, can just stop here and settle down (if already moved)
+    if (hasJumped) {
+        const newMove: Move = window.structuredClone(currentMoveData);
+        newMove.toX = pieceX;
+        newMove.toY = pieceY;
 
-    validMoves.push(newMove);
+        validMoves.push(newMove);
+    }
 
     return validMoves;
 };

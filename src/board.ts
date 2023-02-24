@@ -1,4 +1,5 @@
-import { generateAllValidMoves } from './moves';
+import { findMove } from './ai';
+import { generateAllValidMoves, Move } from './moves';
 
 export const PIECE_BLACK = 'black';
 export const PIECE_WHITE = 'white';
@@ -47,8 +48,10 @@ export class InteractiveBoard {
     boardElement: HTMLElement;
     boardTileContainers: HTMLDivElement[];
     selectedTileCoordinates: undefined | [number, number];
+    currentTurn: Piece;
     constructor(boardElement: HTMLElement) {
         this.board = new Board();
+        this.currentTurn = 'white';
 
         this.boardElement = boardElement;
         this.boardTileContainers = this._initializeTileElements();
@@ -152,7 +155,19 @@ export class InteractiveBoard {
         }
     }
 
+    aiMove() {
+        const move = findMove(this.board, this.currentTurn);
+        console.log(move);
+        this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
+        this.executeMove(move);
+    }
+
     tryMove(startX: number, startY: number, endX: number, endY: number) {
+        // only allow the player who has their turn right now to move
+        if (this.board.getPiece(startX, startY) !== this.currentTurn) {
+            return;
+        }
+
         // if user clicks on a selected square, just de-select it
         if (startX === endX && startY == endY) {
             return;
@@ -160,21 +175,33 @@ export class InteractiveBoard {
 
         // validate that this move actually exists
         const allValidMoves = generateAllValidMoves(startX, startY, this.board);
-        const thisMoveExists = allValidMoves.some((move) => {
+        const thisMove = allValidMoves.find((move) => {
             return move.toX === endX && move.toY === endY;
         });
 
-        if (!thisMoveExists) {
+        if (thisMove === undefined) {
             const errorAudio = new Audio('./audio/wood-sound-error.mp3');
             errorAudio.play();
             return;
         }
 
-        const pieceToMove = this.board.getPiece(startX, startY);
-        this.setPiece(startX, startY, PIECE_NONE);
-        this.setPiece(endX, endY, pieceToMove);
+        this.executeMove(thisMove);
+
+        // mark it as the other players turn now
+
+        this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
+
+        window.setTimeout(() => {
+            this.aiMove();
+        }, 500);
+    }
+
+    executeMove(move: Move) {
+        const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
+        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+        this.setPiece(move.toX, move.toY, pieceToMove);
     }
 }
 
