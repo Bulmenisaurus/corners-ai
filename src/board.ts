@@ -166,7 +166,6 @@ export class InteractiveBoard {
 
     aiMove() {
         const move = findMove(this.board, this.currentTurn);
-        console.log(move);
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
         this.executeMove(move);
         this.markMove(move);
