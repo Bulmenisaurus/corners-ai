@@ -1,3 +1,5 @@
+import { generateAllValidMoves } from './moves';
+
 export const PIECE_BLACK = 'black';
 export const PIECE_WHITE = 'white';
 export const PIECE_NONE = 'none';
@@ -104,6 +106,18 @@ export class InteractiveBoard {
         return [TILE_WHITE as Tile, TILE_BLACK as Tile][(x + y) % 2];
     }
 
+    addSuggestions(x: number, y: number) {
+        const allValidMoves = generateAllValidMoves(x, y, this.board);
+        for (const validMove of allValidMoves) {
+            const tileElement = this.getTileElement(validMove.toX, validMove.toY);
+            tileElement.classList.add('valid');
+        }
+    }
+
+    clearSuggestions() {
+        Array.from(document.querySelectorAll('.valid')).map((v) => v.classList.remove('valid'));
+    }
+
     onClick(event: MouseEvent) {
         const mouseX = event.offsetX;
         const mouseY = event.offsetY;
@@ -119,6 +133,7 @@ export class InteractiveBoard {
 
     onTileClick(tileX: number, tileY: number) {
         const prevSelectedCoords = this.selectedTileCoordinates;
+        this.clearSuggestions();
 
         if (prevSelectedCoords !== undefined) {
             this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
@@ -132,6 +147,7 @@ export class InteractiveBoard {
         } else {
             this.selectedTileCoordinates = [tileX, tileY];
             this.select(tileX, tileY);
+            this.addSuggestions(tileX, tileY);
         }
     }
 

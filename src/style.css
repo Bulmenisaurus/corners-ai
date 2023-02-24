@@ -42,6 +42,10 @@ main {
     background-color: #e3b875;
 }
 
+#board-container .tile.valid {
+    box-shadow: inset 0 0 10px green;
+}
+
 #board-container .piece {
     width: 70%;
     height: 70%;
