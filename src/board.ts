@@ -139,29 +139,7 @@ export class InteractiveBoard {
             this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
             this.selectedTileCoordinates = undefined;
 
-            // if user clicks on a selected square, just de-select it
-            if (prevSelectedCoords[0] === tileX && prevSelectedCoords[1] == tileY) {
-                return;
-            }
-
-            // validate that this move actually exists
-            const allValidMoves = generateAllValidMoves(
-                prevSelectedCoords[0],
-                prevSelectedCoords[1],
-                this.board
-            );
-            const thisMoveExists = allValidMoves.some((move) => {
-                return move.toX === tileX && move.toY === tileY;
-            });
-
-            if (!thisMoveExists) {
-                const errorAudio = new Audio('./audio/wood-sound-error.mp3');
-                errorAudio.play();
-                console.error('This move does not exist');
-                return;
-            }
-
-            this.move(prevSelectedCoords[0], prevSelectedCoords[1], tileX, tileY);
+            this.tryMove(prevSelectedCoords[0], prevSelectedCoords[1], tileX, tileY);
         } else {
             // if user had nothing selected and clicked on an empty tile, just do nothing
             if (this.board.getPiece(tileX, tileY) === PIECE_NONE) {
@@ -174,7 +152,24 @@ export class InteractiveBoard {
         }
     }
 
-    move(startX: number, startY: number, endX: number, endY: number) {
+    tryMove(startX: number, startY: number, endX: number, endY: number) {
+        // if user clicks on a selected square, just de-select it
+        if (startX === endX && startY == endY) {
+            return;
+        }
+
+        // validate that this move actually exists
+        const allValidMoves = generateAllValidMoves(startX, startY, this.board);
+        const thisMoveExists = allValidMoves.some((move) => {
+            return move.toX === endX && move.toY === endY;
+        });
+
+        if (!thisMoveExists) {
+            const errorAudio = new Audio('./audio/wood-sound-error.mp3');
+            errorAudio.play();
+            return;
+        }
+
         const pieceToMove = this.board.getPiece(startX, startY);
         this.setPiece(startX, startY, PIECE_NONE);
         this.setPiece(endX, endY, pieceToMove);
