@@ -155,11 +155,21 @@ export class InteractiveBoard {
         }
     }
 
+    markMove(move: Move) {
+        Array.from(document.querySelectorAll('.mark')).map((v) => v.classList.remove('mark'));
+
+        move.fullMovePath.forEach(([x, y]) => {
+            const tile = this.getTileElement(x, y);
+            tile.classList.add('mark');
+        });
+    }
+
     aiMove() {
         const move = findMove(this.board, this.currentTurn);
         console.log(move);
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
         this.executeMove(move);
+        this.markMove(move);
     }
 
     tryMove(startX: number, startY: number, endX: number, endY: number) {
