@@ -155,18 +155,25 @@
         const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
         const myPiecesMoves = myPieces.map(([x, y]) => generateAllValidMoves(x, y, board)).flat();
         console.log(`There are ${myPiecesMoves.length} possible responses`);
+        const initialPlayerScore = countPlayerScore(aiColor, board);
         let bestPlayerScore = -Infinity;
-        let bestMove = myPiecesMoves[0];
+        let bestMoves = [myPiecesMoves[0]];
         for (const move of myPiecesMoves) {
           board.doMove(move);
           const score = countPlayerScore(aiColor, board);
           if (score > bestPlayerScore) {
             bestPlayerScore = score;
-            bestMove = move;
+            bestMoves = [move];
+          } else if (score === bestPlayerScore) {
+            bestMoves.push(move);
+          } else {
           }
           board.undoMove(move);
         }
-        return bestMove;
+        if (bestPlayerScore < initialPlayerScore) {
+          return void 0;
+        }
+        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
       };
       countPlayerScore = (player, board) => {
         const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
@@ -316,8 +323,12 @@
         aiMove() {
           const move = findMove(this.board, this.currentTurn);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-          this.doMove(move);
-          this.markMove(move);
+          if (move === void 0) {
+            console.warn("AI has no response, probably end of game?");
+          } else {
+            this.doMove(move);
+            this.markMove(move);
+          }
         }
         // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
         // well, in InteractiveBoard this.setPiece updates the UI in addition to the board state

@@ -179,8 +179,13 @@ export class InteractiveBoard {
     aiMove() {
         const move = findMove(this.board, this.currentTurn);
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-        this.doMove(move);
-        this.markMove(move);
+
+        if (move === undefined) {
+            console.warn('AI has no response, probably end of game?');
+        } else {
+            this.doMove(move);
+            this.markMove(move);
+        }
     }
 
     // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
