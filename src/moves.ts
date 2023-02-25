@@ -12,8 +12,40 @@ export interface Move {
     fullMovePath: [number, number][];
 }
 
+const deduplicateMovesByStartEnd = (moves: Move[]) => {
+    const getMoveKey = (move: Move): string => {
+        // all of these are in the range [0, 7]. Would constructing a base-8 number be faster?
+        return `${move.fromX},${move.fromY},${move.toX},${move.toY}`;
+    };
+
+    const moveBuckets: { [key: string]: Move[] } = {};
+
+    for (const move of moves) {
+        const moveKey = getMoveKey(move);
+
+        if (moveKey in moveBuckets) {
+            moveBuckets[moveKey].push(move);
+        } else {
+            moveBuckets[moveKey] = [move];
+        }
+    }
+
+    const dedupMoves: Move[] = [];
+    // now, we only want one move per bucket
+    for (const moveKey in moveBuckets) {
+        // we want to keep the simplest move
+        const moveKeyMoves = moveBuckets[moveKey].sort(
+            (move1, move2) => move1.fullMovePath.length - move2.fullMovePath.length
+        );
+
+        dedupMoves.push(moveKeyMoves[0]);
+    }
+
+    return dedupMoves;
+};
+
 export const generateAllValidMoves = (pieceX: number, pieceY: number, board: Board): Move[] => {
-    return recursiveSearchMoves(
+    const moves = recursiveSearchMoves(
         pieceX,
         pieceY,
         board,
@@ -26,6 +58,8 @@ export const generateAllValidMoves = (pieceX: number, pieceY: number, board: Boa
         },
         false
     );
+
+    return deduplicateMovesByStartEnd(moves);
 };
 
 const recursiveSearchMoves = (
