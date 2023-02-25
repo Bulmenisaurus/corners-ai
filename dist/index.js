@@ -260,6 +260,26 @@
           });
           return tileContainers;
         }
+        loadFen(fen) {
+          const rows = fen.split("/");
+          let currentX = 0;
+          let currentY = 0;
+          for (const row of rows) {
+            for (const char of row) {
+              if (char === "P") {
+                this.setPiece(currentX, currentY, PIECE_WHITE);
+                currentX++;
+              } else if (char === "p") {
+                this.setPiece(currentX, currentY, PIECE_BLACK);
+                currentX++;
+              } else {
+                currentX += parseInt(char);
+              }
+            }
+            currentX = 0;
+            currentY += 1;
+          }
+        }
         getTileElement(x, y) {
           return this.boardTileContainers[x + y * 8];
         }
@@ -381,26 +401,7 @@
         boardElement.id = "board-container";
         mainElement.appendChild(boardElement);
         const board = new InteractiveBoard(boardElement);
-        board.setPiece(0, 7, PIECE_WHITE);
-        board.setPiece(0, 6, PIECE_WHITE);
-        board.setPiece(1, 7, PIECE_WHITE);
-        board.setPiece(2, 7, PIECE_WHITE);
-        board.setPiece(1, 6, PIECE_WHITE);
-        board.setPiece(0, 5, PIECE_WHITE);
-        board.setPiece(3, 7, PIECE_WHITE);
-        board.setPiece(2, 6, PIECE_WHITE);
-        board.setPiece(1, 5, PIECE_WHITE);
-        board.setPiece(0, 4, PIECE_WHITE);
-        board.setPiece(7, 0, PIECE_BLACK);
-        board.setPiece(6, 0, PIECE_BLACK);
-        board.setPiece(7, 1, PIECE_BLACK);
-        board.setPiece(5, 0, PIECE_BLACK);
-        board.setPiece(6, 1, PIECE_BLACK);
-        board.setPiece(7, 2, PIECE_BLACK);
-        board.setPiece(7, 3, PIECE_BLACK);
-        board.setPiece(6, 2, PIECE_BLACK);
-        board.setPiece(5, 1, PIECE_BLACK);
-        board.setPiece(4, 0, PIECE_BLACK);
+        board.loadFen("4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP");
         renderBoard(board, boardElement);
       });
       window.addEventListener("load", () => {

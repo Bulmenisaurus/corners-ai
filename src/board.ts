@@ -95,6 +95,27 @@ export class InteractiveBoard {
         return tileContainers;
     }
 
+    loadFen(fen: string) {
+        const rows = fen.split('/');
+        let currentX = 0;
+        let currentY = 0;
+        for (const row of rows) {
+            for (const char of row) {
+                if (char === 'P') {
+                    this.setPiece(currentX, currentY, PIECE_WHITE);
+                    currentX++;
+                } else if (char === 'p') {
+                    this.setPiece(currentX, currentY, PIECE_BLACK);
+                    currentX++;
+                } else {
+                    currentX += parseInt(char);
+                }
+            }
+            currentX = 0;
+            currentY += 1;
+        }
+    }
+
     getTileElement(x: number, y: number): HTMLDivElement {
         return this.boardTileContainers[x + y * 8];
     }
