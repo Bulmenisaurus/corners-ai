@@ -410,7 +410,9 @@
           this.doMove(thisMove);
           console.log(`My score: ${countPlayerScore(PIECE_WHITE, this.board)}`);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-          this.aiMove();
+          window.setTimeout(() => {
+            this.aiMove();
+          }, 0);
         }
       };
       renderBoard = (board, boardContainer) => {

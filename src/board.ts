@@ -255,7 +255,9 @@ export class InteractiveBoard {
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
 
-        this.aiMove();
+        window.setTimeout(() => {
+            this.aiMove();
+        }, 0);
     }
 }
 
