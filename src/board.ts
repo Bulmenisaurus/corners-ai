@@ -148,7 +148,7 @@ export class InteractiveBoard {
 
     onTileClick(tileX: number, tileY: number) {
         const prevSelectedCoords = this.selectedTileCoordinates;
-        this.clearSuggestions();
+        // this.clearSuggestions();
 
         if (prevSelectedCoords !== undefined) {
             this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
@@ -163,7 +163,7 @@ export class InteractiveBoard {
 
             this.selectedTileCoordinates = [tileX, tileY];
             this.select(tileX, tileY);
-            this.addSuggestions(tileX, tileY);
+            // this.addSuggestions(tileX, tileY);
         }
     }
 

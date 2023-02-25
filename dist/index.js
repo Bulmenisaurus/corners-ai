@@ -294,7 +294,6 @@
         }
         onTileClick(tileX, tileY) {
           const prevSelectedCoords = this.selectedTileCoordinates;
-          this.clearSuggestions();
           if (prevSelectedCoords !== void 0) {
             this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
             this.selectedTileCoordinates = void 0;
@@ -305,7 +304,6 @@
             }
             this.selectedTileCoordinates = [tileX, tileY];
             this.select(tileX, tileY);
-            this.addSuggestions(tileX, tileY);
           }
         }
         markMove(move) {
