@@ -29,7 +29,7 @@
   };
 
   // src/moves.ts
-  var deduplicateMovesByStartEnd, generateAllValidMoves, recursiveSearchMoves;
+  var deduplicateMovesByStartEnd, generateAllMovesFromTile, generateAllMoves, recursiveSearchMoves;
   var init_moves = __esm({
     "src/moves.ts"() {
       "use strict";
@@ -56,7 +56,7 @@
         }
         return dedupMoves;
       };
-      generateAllValidMoves = (pieceX, pieceY, board) => {
+      generateAllMovesFromTile = (pieceX, pieceY, board) => {
         const moves = recursiveSearchMoves(
           pieceX,
           pieceY,
@@ -71,6 +71,18 @@
           false
         );
         return deduplicateMovesByStartEnd(moves);
+      };
+      generateAllMoves = (board, pieceColor) => {
+        const moves = [];
+        for (const coordinate of board.coordinates()) {
+          const tileOurColor = board.getPiece(coordinate[0], coordinate[1]) === pieceColor;
+          if (!tileOurColor) {
+            continue;
+          }
+          const tileMoves = generateAllMovesFromTile(coordinate[0], coordinate[1], board);
+          tileMoves.forEach((m) => moves.push(m));
+        }
+        return moves;
       };
       recursiveSearchMoves = (pieceX, pieceY, board, currentMoveData, hasJumped) => {
         const validMoves = [];
@@ -145,7 +157,7 @@
   });
 
   // src/ai.ts
-  var findMove, countPlayerScore;
+  var findMove, search, evaluate, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
@@ -153,27 +165,44 @@
       init_moves();
       findMove = (board, aiColor) => {
         const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
-        const myPiecesMoves = myPieces.map(([x, y]) => generateAllValidMoves(x, y, board)).flat();
-        console.log(`There are ${myPiecesMoves.length} possible responses`);
-        const initialPlayerScore = countPlayerScore(aiColor, board);
-        let bestPlayerScore = -Infinity;
-        let bestMoves = [myPiecesMoves[0]];
-        for (const move of myPiecesMoves) {
+        const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+        const startTime = Date.now();
+        const bestMove = search(3, board, aiColor)[1];
+        const endTime = Date.now();
+        console.log(`Took ${endTime - startTime}ms to evaluate positions`);
+        if (bestMove === void 0) {
+          throw new Error("Could not find a move for some reason");
+        }
+        return bestMove;
+      };
+      search = (depth, board, playerToMove) => {
+        if (depth === 0) {
+          return [evaluate(board, playerToMove), void 0];
+        }
+        const moves = generateAllMoves(board, playerToMove);
+        let bestEvaluation = -Infinity;
+        let bestEvaluationMove = moves[0];
+        for (const move of moves) {
           board.doMove(move);
-          const score = countPlayerScore(aiColor, board);
-          if (score > bestPlayerScore) {
-            bestPlayerScore = score;
-            bestMoves = [move];
-          } else if (score === bestPlayerScore) {
-            bestMoves.push(move);
-          } else {
+          const evaluation = -search(
+            depth - 1,
+            board,
+            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
+          )[0];
+          if (evaluation > bestEvaluation) {
+            bestEvaluation = evaluation;
+            bestEvaluationMove = move;
           }
           board.undoMove(move);
         }
-        if (bestPlayerScore < initialPlayerScore) {
-          return void 0;
-        }
-        return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+        return [bestEvaluation, bestEvaluationMove];
+      };
+      evaluate = (board, playerToMove) => {
+        const whiteScore = countPlayerScore(PIECE_WHITE, board);
+        const blackScore = countPlayerScore(PIECE_BLACK, board);
+        const evaluation = whiteScore - blackScore;
+        const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
+        return evaluation * perspective;
       };
       countPlayerScore = (player, board) => {
         const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
@@ -301,7 +330,7 @@
           return [TILE_WHITE, TILE_BLACK][(x + y) % 2];
         }
         addSuggestions(x, y) {
-          const allValidMoves = generateAllValidMoves(x, y, this.board);
+          const allValidMoves = generateAllMovesFromTile(x, y, this.board);
           for (const validMove of allValidMoves) {
             const tileElement = this.getTileElement(validMove.toX, validMove.toY);
             tileElement.classList.add("valid");
@@ -369,7 +398,7 @@
           if (startX === endX && startY == endY) {
             return;
           }
-          const allValidMoves = generateAllValidMoves(startX, startY, this.board);
+          const allValidMoves = generateAllMovesFromTile(startX, startY, this.board);
           const thisMove = allValidMoves.find((move) => {
             return move.toX === endX && move.toY === endY;
           });
@@ -381,9 +410,7 @@
           this.doMove(thisMove);
           console.log(`My score: ${countPlayerScore(PIECE_WHITE, this.board)}`);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-          window.setTimeout(() => {
-            this.aiMove();
-          }, 500);
+          this.aiMove();
         }
       };
       renderBoard = (board, boardContainer) => {

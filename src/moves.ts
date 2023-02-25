@@ -1,4 +1,4 @@
-import { Board, PIECE_NONE } from './board';
+import { Board, Piece, PIECE_NONE } from './board';
 
 export interface Move {
     fromX: number;
@@ -44,7 +44,7 @@ const deduplicateMovesByStartEnd = (moves: Move[]) => {
     return dedupMoves;
 };
 
-export const generateAllValidMoves = (pieceX: number, pieceY: number, board: Board): Move[] => {
+export const generateAllMovesFromTile = (pieceX: number, pieceY: number, board: Board): Move[] => {
     const moves = recursiveSearchMoves(
         pieceX,
         pieceY,
@@ -60,6 +60,21 @@ export const generateAllValidMoves = (pieceX: number, pieceY: number, board: Boa
     );
 
     return deduplicateMovesByStartEnd(moves);
+};
+
+export const generateAllMoves = (board: Board, pieceColor: Piece): Move[] => {
+    const moves: Move[] = [];
+
+    for (const coordinate of board.coordinates()) {
+        const tileOurColor = board.getPiece(coordinate[0], coordinate[1]) === pieceColor;
+        if (!tileOurColor) {
+            continue;
+        }
+
+        const tileMoves = generateAllMovesFromTile(coordinate[0], coordinate[1], board);
+        tileMoves.forEach((m) => moves.push(m));
+    }
+    return moves;
 };
 
 const recursiveSearchMoves = (

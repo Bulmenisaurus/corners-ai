@@ -1,5 +1,5 @@
 import { countPlayerScore, findMove } from './ai';
-import { generateAllValidMoves, Move } from './moves';
+import { generateAllMovesFromTile, Move } from './moves';
 
 export const PIECE_BLACK = 'black';
 export const PIECE_WHITE = 'white';
@@ -143,7 +143,7 @@ export class InteractiveBoard {
     }
 
     addSuggestions(x: number, y: number) {
-        const allValidMoves = generateAllValidMoves(x, y, this.board);
+        const allValidMoves = generateAllMovesFromTile(x, y, this.board);
         for (const validMove of allValidMoves) {
             const tileElement = this.getTileElement(validMove.toX, validMove.toY);
             tileElement.classList.add('valid');
@@ -235,7 +235,7 @@ export class InteractiveBoard {
         }
 
         // validate that this move actually exists
-        const allValidMoves = generateAllValidMoves(startX, startY, this.board);
+        const allValidMoves = generateAllMovesFromTile(startX, startY, this.board);
         const thisMove = allValidMoves.find((move) => {
             return move.toX === endX && move.toY === endY;
         });
@@ -255,9 +255,7 @@ export class InteractiveBoard {
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
 
-        window.setTimeout(() => {
-            this.aiMove();
-        }, 500);
+        this.aiMove();
     }
 }
 

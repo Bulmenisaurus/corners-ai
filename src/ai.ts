@@ -1,39 +1,63 @@
-import { Board, Piece, PIECE_BLACK } from './board';
-import { Move, generateAllValidMoves } from './moves';
+import { Board, Piece, PIECE_BLACK, PIECE_WHITE } from './board';
+import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
 
 export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
-    const myPiecesMoves = myPieces.map(([x, y]) => generateAllValidMoves(x, y, board)).flat();
-    console.log(`There are ${myPiecesMoves.length} possible responses`);
+    const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+    // console.log(`There are ${myPiecesMoves.length} possible responses`);
 
-    const initialPlayerScore = countPlayerScore(aiColor, board);
-    let bestPlayerScore = -Infinity;
-    let bestMoves: Move[] = [myPiecesMoves[0]];
+    const startTime = Date.now();
+    const bestMove = search(3, board, aiColor)[1];
+    const endTime = Date.now();
+    console.log(`Took ${endTime - startTime}ms to evaluate positions`);
 
-    for (const move of myPiecesMoves) {
-        board.doMove(move);
-        const score = countPlayerScore(aiColor, board);
-
-        if (score > bestPlayerScore) {
-            // found a new best move!
-            bestPlayerScore = score;
-            bestMoves = [move];
-        } else if (score === bestPlayerScore) {
-            // this move is one of the best, add it to the list of candidates
-            bestMoves.push(move);
-        } else {
-            // this move was worse than the best, ignore it
-        }
-        board.undoMove(move);
+    if (bestMove === undefined) {
+        throw new Error('Could not find a move for some reason');
     }
 
-    if (bestPlayerScore < initialPlayerScore) {
-        return undefined;
-    }
-    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    return bestMove;
 };
 
 //! The scoring: higher is better
+
+const search = (depth: number, board: Board, playerToMove: Piece): [number, Move | undefined] => {
+    if (depth === 0) {
+        return [evaluate(board, playerToMove), undefined];
+    }
+
+    const moves: Move[] = generateAllMoves(board, playerToMove);
+
+    let bestEvaluation: number = -Infinity;
+    let bestEvaluationMove: Move = moves[0];
+
+    for (const move of moves) {
+        board.doMove(move);
+        const evaluation: number = -search(
+            depth - 1,
+            board,
+            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
+        )[0];
+
+        if (evaluation > bestEvaluation) {
+            bestEvaluation = evaluation;
+            bestEvaluationMove = move;
+        }
+
+        board.undoMove(move);
+    }
+    return [bestEvaluation, bestEvaluationMove];
+};
+
+const evaluate = (board: Board, playerToMove: Piece) => {
+    const whiteScore = countPlayerScore(PIECE_WHITE, board);
+    const blackScore = countPlayerScore(PIECE_BLACK, board);
+
+    const evaluation = whiteScore - blackScore;
+
+    const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
+
+    return evaluation * perspective;
+};
 
 export const countPlayerScore = (player: Piece, board: Board) => {
     // count cumulative distances from the opposite corner
