@@ -1,4 +1,4 @@
-import { findMove } from './ai';
+import { countPlayerScore, findMove } from './ai';
 import { generateAllValidMoves, Move } from './moves';
 
 export const PIECE_BLACK = 'black';
@@ -40,6 +40,18 @@ export class Board {
         }
 
         return coordinates;
+    }
+
+    doMove(move: Move) {
+        const pieceToMove = this.getPiece(move.fromX, move.fromY);
+        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+        this.setPiece(move.toX, move.toY, pieceToMove);
+    }
+
+    undoMove(move: Move) {
+        const pieceToMove = this.getPiece(move.toX, move.toY);
+        this.setPiece(move.fromX, move.fromY, pieceToMove);
+        this.setPiece(move.toX, move.toY, PIECE_NONE);
     }
 }
 
@@ -167,8 +179,22 @@ export class InteractiveBoard {
     aiMove() {
         const move = findMove(this.board, this.currentTurn);
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-        this.executeMove(move);
+        this.doMove(move);
         this.markMove(move);
+    }
+
+    // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
+    // well, in InteractiveBoard this.setPiece updates the UI in addition to the board state
+    doMove(move: Move) {
+        const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
+        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+        this.setPiece(move.toX, move.toY, pieceToMove);
+    }
+
+    undoMove(move: Move) {
+        const pieceToMove = this.board.getPiece(move.toX, move.toY);
+        this.setPiece(move.fromX, move.fromY, pieceToMove);
+        this.setPiece(move.toX, move.toY, PIECE_NONE);
     }
 
     tryMove(startX: number, startY: number, endX: number, endY: number) {
@@ -194,7 +220,8 @@ export class InteractiveBoard {
             return;
         }
 
-        this.executeMove(thisMove);
+        this.doMove(thisMove);
+        console.log(`My score: ${countPlayerScore(PIECE_WHITE, this.board)}`);
 
         // mark it as the other players turn now
 
@@ -205,12 +232,6 @@ export class InteractiveBoard {
         window.setTimeout(() => {
             this.aiMove();
         }, 500);
-    }
-
-    executeMove(move: Move) {
-        const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
-        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
-        this.setPiece(move.toX, move.toY, pieceToMove);
     }
 }
 

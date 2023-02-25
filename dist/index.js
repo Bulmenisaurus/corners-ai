@@ -145,22 +145,45 @@
   });
 
   // src/ai.ts
-  var findMove;
+  var findMove, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
+      init_board();
       init_moves();
       findMove = (board, aiColor) => {
         const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
         const myPiecesMoves = myPieces.map(([x, y]) => generateAllValidMoves(x, y, board)).flat();
         console.log(`There are ${myPiecesMoves.length} possible responses`);
-        return myPiecesMoves[Math.floor(Math.random() * myPiecesMoves.length)];
+        let bestPlayerScore = -Infinity;
+        let bestMove = myPiecesMoves[0];
+        for (const move of myPiecesMoves) {
+          board.doMove(move);
+          const score = countPlayerScore(aiColor, board);
+          if (score > bestPlayerScore) {
+            bestPlayerScore = score;
+            bestMove = move;
+          }
+          board.undoMove(move);
+        }
+        return bestMove;
+      };
+      countPlayerScore = (player, board) => {
+        const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
+        const oppositeCornerY = player === PIECE_BLACK ? 7 : 0;
+        const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === player);
+        const myPiecesDistances = myPieces.map(
+          ([x, y]) => Math.abs(x - oppositeCornerX) + Math.abs(y - oppositeCornerY)
+        );
+        const cumulativeDistance = myPiecesDistances.reduce((a, b) => a + b, 0);
+        const score = -cumulativeDistance;
+        return score;
       };
     }
   });
 
   // src/board.ts
-  var PIECE_BLACK, PIECE_WHITE, PIECE_NONE, TILE_BLACK, TILE_WHITE, Board2, InteractiveBoard, renderBoard;
+  var PIECE_BLACK, PIECE_WHITE, PIECE_NONE, TILE_BLACK, TILE_WHITE, Board3, InteractiveBoard, renderBoard;
   var init_board = __esm({
     "src/board.ts"() {
       "use strict";
@@ -171,7 +194,7 @@
       PIECE_NONE = "none";
       TILE_BLACK = "black";
       TILE_WHITE = "white";
-      Board2 = class {
+      Board3 = class {
         constructor() {
           this.board = Array(8 * 8).fill(PIECE_NONE);
         }
@@ -193,10 +216,20 @@
           }
           return coordinates;
         }
+        doMove(move) {
+          const pieceToMove = this.getPiece(move.fromX, move.fromY);
+          this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+          this.setPiece(move.toX, move.toY, pieceToMove);
+        }
+        undoMove(move) {
+          const pieceToMove = this.getPiece(move.toX, move.toY);
+          this.setPiece(move.fromX, move.fromY, pieceToMove);
+          this.setPiece(move.toX, move.toY, PIECE_NONE);
+        }
       };
       InteractiveBoard = class {
         constructor(boardElement) {
-          this.board = new Board2();
+          this.board = new Board3();
           this.currentTurn = "white";
           this.boardElement = boardElement;
           this.boardTileContainers = this._initializeTileElements();
@@ -285,8 +318,20 @@
         aiMove() {
           const move = findMove(this.board, this.currentTurn);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-          this.executeMove(move);
+          this.doMove(move);
           this.markMove(move);
+        }
+        // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
+        // well, in InteractiveBoard this.setPiece updates the UI in addition to the board state
+        doMove(move) {
+          const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
+          this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+          this.setPiece(move.toX, move.toY, pieceToMove);
+        }
+        undoMove(move) {
+          const pieceToMove = this.board.getPiece(move.toX, move.toY);
+          this.setPiece(move.fromX, move.fromY, pieceToMove);
+          this.setPiece(move.toX, move.toY, PIECE_NONE);
         }
         tryMove(startX, startY, endX, endY) {
           if (this.board.getPiece(startX, startY) !== this.currentTurn) {
@@ -304,16 +349,12 @@
             errorAudio.play();
             return;
           }
-          this.executeMove(thisMove);
+          this.doMove(thisMove);
+          console.log(`My score: ${countPlayerScore(PIECE_WHITE, this.board)}`);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
           window.setTimeout(() => {
             this.aiMove();
           }, 500);
-        }
-        executeMove(move) {
-          const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
-          this.setPiece(move.fromX, move.fromY, PIECE_NONE);
-          this.setPiece(move.toX, move.toY, pieceToMove);
         }
       };
       renderBoard = (board, boardContainer) => {
