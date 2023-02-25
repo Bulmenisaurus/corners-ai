@@ -63,7 +63,7 @@ main {
 
 #board-container .piece[data-piece-type='black'] {
     background-color: black;
-    border-color: black;
+    border-color: darkslategray;
 }
 #board-container .piece[data-piece-type='white'] {
     background-color: white;
