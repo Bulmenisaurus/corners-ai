@@ -176,8 +176,9 @@
         return bestMove;
       };
       search = (depth, board, playerToMove) => {
-        if (depth === 0) {
-          return [evaluate(board, playerToMove), void 0];
+        const playerFinished = countPlayerScore(playerToMove, board) === -20;
+        if (depth === 0 || playerFinished) {
+          return [evaluate(board), void 0];
         }
         const moves = generateAllMoves(board, playerToMove);
         let bestEvaluation = -Infinity;
@@ -197,12 +198,11 @@
         }
         return [bestEvaluation, bestEvaluationMove];
       };
-      evaluate = (board, playerToMove) => {
+      evaluate = (board) => {
         const whiteScore = countPlayerScore(PIECE_WHITE, board);
         const blackScore = countPlayerScore(PIECE_BLACK, board);
         const evaluation = whiteScore - blackScore;
-        const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
-        return evaluation * perspective;
+        return evaluation;
       };
       countPlayerScore = (player, board) => {
         const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;

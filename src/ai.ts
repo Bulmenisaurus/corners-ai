@@ -21,8 +21,9 @@ export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
 //! The scoring: higher is better
 
 const search = (depth: number, board: Board, playerToMove: Piece): [number, Move | undefined] => {
-    if (depth === 0) {
-        return [evaluate(board, playerToMove), undefined];
+    const playerFinished = countPlayerScore(playerToMove, board) === -20;
+    if (depth === 0 || playerFinished) {
+        return [evaluate(board), undefined];
     }
 
     const moves: Move[] = generateAllMoves(board, playerToMove);
@@ -48,15 +49,13 @@ const search = (depth: number, board: Board, playerToMove: Piece): [number, Move
     return [bestEvaluation, bestEvaluationMove];
 };
 
-const evaluate = (board: Board, playerToMove: Piece) => {
+const evaluate = (board: Board) => {
     const whiteScore = countPlayerScore(PIECE_WHITE, board);
     const blackScore = countPlayerScore(PIECE_BLACK, board);
 
     const evaluation = whiteScore - blackScore;
 
-    const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
-
-    return evaluation * perspective;
+    return evaluation;
 };
 
 export const countPlayerScore = (player: Piece, board: Board) => {
