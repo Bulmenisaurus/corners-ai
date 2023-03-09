@@ -6,6 +6,7 @@ export const PIECE_WHITE = 'white';
 export const PIECE_NONE = 'none';
 
 export type Piece = typeof PIECE_BLACK | typeof PIECE_WHITE | typeof PIECE_NONE;
+export type Player = typeof PIECE_BLACK | typeof PIECE_WHITE;
 
 export const TILE_BLACK = 'black';
 export const TILE_WHITE = 'white';
@@ -60,7 +61,7 @@ export class InteractiveBoard {
     boardElement: HTMLElement;
     boardTileContainers: HTMLDivElement[];
     selectedTileCoordinates: undefined | [number, number];
-    currentTurn: Piece;
+    currentTurn: Player;
     constructor(boardElement: HTMLElement) {
         this.board = new Board();
         this.currentTurn = 'white';

@@ -77,6 +77,16 @@ export const generateAllMoves = (board: Board, pieceColor: Piece): Move[] => {
     return moves;
 };
 
+const cloneMove = (move: Move): Move => {
+    return {
+        fromX: move.fromX,
+        fromY: move.fromY,
+        fullMovePath: [...move.fullMovePath],
+        toX: move.toX,
+        toY: move.toY,
+    };
+};
+
 const recursiveSearchMoves = (
     pieceX: number,
     pieceY: number,
@@ -120,7 +130,7 @@ const recursiveSearchMoves = (
 
         // if there isn't, that's a valid move!
 
-        const newMove: Move = window.structuredClone(currentMoveData);
+        const newMove: Move = cloneMove(currentMoveData);
         newMove.fullMovePath.push([newX, newY]);
         newMove.toX = newX;
         newMove.toY = newY;
@@ -156,7 +166,7 @@ const recursiveSearchMoves = (
             continue;
         }
 
-        const newMove: Move = window.structuredClone(currentMoveData);
+        const newMove: Move = cloneMove(currentMoveData);
         newMove.fullMovePath.push([newX, newY]);
 
         // and now, we can recursively search farther, since you can continue to jump
@@ -170,7 +180,7 @@ const recursiveSearchMoves = (
 
     // or, can just stop here and settle down (if already moved)
     if (hasJumped) {
-        const newMove: Move = window.structuredClone(currentMoveData);
+        const newMove: Move = cloneMove(currentMoveData);
         newMove.toX = pieceX;
         newMove.toY = pieceY;
 

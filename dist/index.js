@@ -29,7 +29,7 @@
   };
 
   // src/moves.ts
-  var deduplicateMovesByStartEnd, generateAllMovesFromTile, generateAllMoves, recursiveSearchMoves;
+  var deduplicateMovesByStartEnd, generateAllMovesFromTile, generateAllMoves, cloneMove, recursiveSearchMoves;
   var init_moves = __esm({
     "src/moves.ts"() {
       "use strict";
@@ -84,6 +84,15 @@
         }
         return moves;
       };
+      cloneMove = (move) => {
+        return {
+          fromX: move.fromX,
+          fromY: move.fromY,
+          fullMovePath: [...move.fullMovePath],
+          toX: move.toX,
+          toY: move.toY
+        };
+      };
       recursiveSearchMoves = (pieceX, pieceY, board, currentMoveData, hasJumped) => {
         const validMoves = [];
         const tileOffsets = [
@@ -116,7 +125,7 @@
           if (board.getPiece(newX, newY) != PIECE_NONE) {
             continue;
           }
-          const newMove = window.structuredClone(currentMoveData);
+          const newMove = cloneMove(currentMoveData);
           newMove.fullMovePath.push([newX, newY]);
           newMove.toX = newX;
           newMove.toY = newY;
@@ -138,7 +147,7 @@
           if (!isSomeoneToJumpOver || !isSomewhereToLand || hasBeenHereBefore) {
             continue;
           }
-          const newMove = window.structuredClone(currentMoveData);
+          const newMove = cloneMove(currentMoveData);
           newMove.fullMovePath.push([newX, newY]);
           const deeperMoves = recursiveSearchMoves(newX, newY, board, newMove, true);
           for (const move of deeperMoves) {
@@ -146,7 +155,7 @@
           }
         }
         if (hasJumped) {
-          const newMove = window.structuredClone(currentMoveData);
+          const newMove = cloneMove(currentMoveData);
           newMove.toX = pieceX;
           newMove.toY = pieceY;
           validMoves.push(newMove);
@@ -157,7 +166,7 @@
   });
 
   // src/ai.ts
-  var findMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
+  var findMove, orderMoves, evaluateMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
@@ -165,14 +174,15 @@
       init_moves();
       findMove = (board, aiColor) => {
         const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
-        const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+        let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+        myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
         let bestMove = myPiecesMoves[0];
         let bestMoveScore = -Infinity;
         const startTime = Date.now();
         for (const move of myPiecesMoves) {
           board.doMove(move);
           const opponentScore = recursiveBoardSearchAlphaBeta(
-            2,
+            3,
             board,
             aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
             -Infinity,
@@ -188,6 +198,19 @@
         const endTime = Date.now();
         console.log(`Took ${endTime - startTime}ms to evaluate positions`);
         return bestMove;
+      };
+      orderMoves = (moves, playerToMove) => {
+        return moves.sort((moveA, moveB) => {
+          return evaluateMove(moveA, playerToMove) - evaluateMove(moveB, playerToMove);
+        }).reverse();
+      };
+      evaluateMove = (move, playerToMove) => {
+        const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
+        const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
+        const initialDistance = Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
+        const endingDistance = Math.abs(move.toX - oppositeCornerX) + Math.abs(move.toY - oppositeCornerY);
+        const moveScore = initialDistance - endingDistance;
+        return moveScore;
       };
       recursiveBoardSearchAlphaBeta = (depth, board, playerToMove, alpha, beta) => {
         const playerFinished = countPlayerScore(playerToMove, board) === -20;

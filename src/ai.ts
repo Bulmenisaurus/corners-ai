@@ -1,9 +1,10 @@
-import { Board, Piece, PIECE_BLACK, PIECE_WHITE } from './board';
+import { Board, Piece, Player, PIECE_BLACK, PIECE_WHITE } from './board';
 import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
 
-export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
+export const findMove = (board: Board, aiColor: Player): Move => {
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
-    const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+    let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+    myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
 
     let bestMove: Move = myPiecesMoves[0];
     let bestMoveScore = -Infinity;
@@ -15,7 +16,7 @@ export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
         // we just made a move, so now its time to evaluate from the perspective of the opponent
 
         const opponentScore = recursiveBoardSearchAlphaBeta(
-            2,
+            3,
             board,
             aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
             -Infinity,
@@ -38,10 +39,44 @@ export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
     return bestMove;
 };
 
+/**
+ * Alpha beta pruning works by using really good moves to eliminate other possibilities, so if we evaluate (what we think)
+ * are good moves first, it may allow alpha-beta to prune more effectively
+ */
+const orderMoves = (moves: Move[], playerToMove: Player) => {
+    return (
+        moves
+            .sort((moveA, moveB) => {
+                return evaluateMove(moveA, playerToMove) - evaluateMove(moveB, playerToMove);
+            })
+            // .sort sorts in ascending order, while we want the best moves first
+            .reverse()
+    );
+};
+
+const evaluateMove = (move: Move, playerToMove: Player) => {
+    const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
+    const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
+
+    const initialDistance =
+        Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
+    const endingDistance =
+        Math.abs(move.toX - oppositeCornerX) + Math.abs(move.toY - oppositeCornerY);
+
+    // if a move is really good, the ending distance should probably be lower than the starting distance
+
+    const moveScore = initialDistance - endingDistance;
+
+    // if initialDistance-endingDistance > 0 (a good score) => initialDistance > endingDistance
+    // this is exactly what we want
+
+    return moveScore;
+};
+
 const recursiveBoardSearchAlphaBeta = (
     depth: number,
     board: Board,
-    playerToMove: Piece,
+    playerToMove: Player,
     alpha: number,
     beta: number
 ): number => {
@@ -79,7 +114,7 @@ const recursiveBoardSearchAlphaBeta = (
  *  - negative if the player who's turn it is to move is doing worse
  *  - 0 if it is a tie.
  */
-const evaluate = (board: Board, playerToMove: Piece) => {
+const evaluate = (board: Board, playerToMove: Player) => {
     const whiteScore = countPlayerScore(PIECE_WHITE, board);
     const blackScore = countPlayerScore(PIECE_BLACK, board);
 
