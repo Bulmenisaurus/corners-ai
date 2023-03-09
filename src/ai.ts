@@ -6,56 +6,81 @@ export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
     const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
     // console.log(`There are ${myPiecesMoves.length} possible responses`);
 
+    let bestMove: Move = myPiecesMoves[0];
+    let bestMoveScore = -Infinity;
+
     const startTime = Date.now();
-    const bestMove = search(3, board, aiColor)[1];
+    // const bestMove = moveSearch(1, board, aiColor);
+
+    for (const move of myPiecesMoves) {
+        board.doMove(move);
+        // we just made a move, so now its time to evaluate from the perspective of the opponent
+        const opponentScore = recursiveBoardSearch(
+            2,
+            board,
+            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE
+        );
+
+        board.undoMove(move);
+
+        const ourScore = -opponentScore;
+
+        if (ourScore > bestMoveScore) {
+            bestMoveScore = ourScore;
+            bestMove = move;
+        }
+    }
+
     const endTime = Date.now();
     console.log(`Took ${endTime - startTime}ms to evaluate positions`);
-
-    if (bestMove === undefined) {
-        throw new Error('Could not find a move for some reason');
-    }
 
     return bestMove;
 };
 
 //! The scoring: higher is better
 
-const search = (depth: number, board: Board, playerToMove: Piece): [number, Move | undefined] => {
+const recursiveBoardSearch = (depth: number, board: Board, playerToMove: Piece): number => {
     const playerFinished = countPlayerScore(playerToMove, board) === -20;
     if (depth === 0 || playerFinished) {
-        return [evaluate(board), undefined];
+        return evaluate(board, playerToMove);
     }
 
     const moves: Move[] = generateAllMoves(board, playerToMove);
 
     let bestEvaluation: number = -Infinity;
-    let bestEvaluationMove: Move = moves[0];
 
     for (const move of moves) {
         board.doMove(move);
-        const evaluation: number = -search(
+        const evaluation: number = -recursiveBoardSearch(
             depth - 1,
             board,
             playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
-        )[0];
+        );
 
         if (evaluation > bestEvaluation) {
             bestEvaluation = evaluation;
-            bestEvaluationMove = move;
         }
 
         board.undoMove(move);
     }
-    return [bestEvaluation, bestEvaluationMove];
+    return bestEvaluation;
 };
 
-const evaluate = (board: Board) => {
+/**
+ * Basic evaluation function.
+ * Returns a:
+ *  - positive value if the player who's turn it is to move is doing better
+ *  - negative if the player who's turn it is to move is doing worse
+ *  - 0 if it is a tie.
+ */
+const evaluate = (board: Board, playerToMove: Piece) => {
     const whiteScore = countPlayerScore(PIECE_WHITE, board);
     const blackScore = countPlayerScore(PIECE_BLACK, board);
 
     const evaluation = whiteScore - blackScore;
+    const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
 
-    return evaluation;
+    return evaluation * perspective;
 };
 
 export const countPlayerScore = (player: Piece, board: Board) => {
@@ -70,7 +95,7 @@ export const countPlayerScore = (player: Piece, board: Board) => {
     );
 
     const cumulativeDistance = myPiecesDistances.reduce((a, b) => a + b, 0);
-    const score = -cumulativeDistance;
+    const score = 1000 - cumulativeDistance;
 
     return score;
 };

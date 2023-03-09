@@ -157,7 +157,7 @@
   });
 
   // src/ai.ts
-  var findMove, search, evaluate, countPlayerScore;
+  var findMove, recursiveBoardSearch, evaluate, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
@@ -166,43 +166,54 @@
       findMove = (board, aiColor) => {
         const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
         const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+        let bestMove = myPiecesMoves[0];
+        let bestMoveScore = -Infinity;
         const startTime = Date.now();
-        const bestMove = search(3, board, aiColor)[1];
+        for (const move of myPiecesMoves) {
+          board.doMove(move);
+          const opponentScore = recursiveBoardSearch(
+            2,
+            board,
+            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE
+          );
+          board.undoMove(move);
+          const ourScore = -opponentScore;
+          if (ourScore > bestMoveScore) {
+            bestMoveScore = ourScore;
+            bestMove = move;
+          }
+        }
         const endTime = Date.now();
         console.log(`Took ${endTime - startTime}ms to evaluate positions`);
-        if (bestMove === void 0) {
-          throw new Error("Could not find a move for some reason");
-        }
         return bestMove;
       };
-      search = (depth, board, playerToMove) => {
+      recursiveBoardSearch = (depth, board, playerToMove) => {
         const playerFinished = countPlayerScore(playerToMove, board) === -20;
         if (depth === 0 || playerFinished) {
-          return [evaluate(board), void 0];
+          return evaluate(board, playerToMove);
         }
         const moves = generateAllMoves(board, playerToMove);
         let bestEvaluation = -Infinity;
-        let bestEvaluationMove = moves[0];
         for (const move of moves) {
           board.doMove(move);
-          const evaluation = -search(
+          const evaluation = -recursiveBoardSearch(
             depth - 1,
             board,
             playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
-          )[0];
+          );
           if (evaluation > bestEvaluation) {
             bestEvaluation = evaluation;
-            bestEvaluationMove = move;
           }
           board.undoMove(move);
         }
-        return [bestEvaluation, bestEvaluationMove];
+        return bestEvaluation;
       };
-      evaluate = (board) => {
+      evaluate = (board, playerToMove) => {
         const whiteScore = countPlayerScore(PIECE_WHITE, board);
         const blackScore = countPlayerScore(PIECE_BLACK, board);
         const evaluation = whiteScore - blackScore;
-        return evaluation;
+        const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
+        return evaluation * perspective;
       };
       countPlayerScore = (player, board) => {
         const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
@@ -212,7 +223,7 @@
           ([x, y]) => Math.abs(x - oppositeCornerX) + Math.abs(y - oppositeCornerY)
         );
         const cumulativeDistance = myPiecesDistances.reduce((a, b) => a + b, 0);
-        const score = -cumulativeDistance;
+        const score = 1e3 - cumulativeDistance;
         return score;
       };
     }
