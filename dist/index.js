@@ -166,7 +166,7 @@
   });
 
   // src/ai.ts
-  var findMove, orderMoves, evaluateMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
+  var findMove, orderMoves, TIMES_TO_EVAL, evaluateMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
@@ -197,6 +197,8 @@
         }
         const endTime = Date.now();
         console.log(`Took ${endTime - startTime}ms to evaluate positions`);
+        console.log(`Evaluated ${TIMES_TO_EVAL} position`);
+        TIMES_TO_EVAL = 0;
         return bestMove;
       };
       orderMoves = (moves, playerToMove) => {
@@ -204,7 +206,9 @@
           return evaluateMove(moveA, playerToMove) - evaluateMove(moveB, playerToMove);
         }).reverse();
       };
+      TIMES_TO_EVAL = 0;
       evaluateMove = (move, playerToMove) => {
+        TIMES_TO_EVAL++;
         const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
         const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
         const initialDistance = Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
@@ -213,7 +217,7 @@
         return moveScore;
       };
       recursiveBoardSearchAlphaBeta = (depth, board, playerToMove, alpha, beta) => {
-        const playerFinished = countPlayerScore(playerToMove, board) === -20;
+        const playerFinished = countPlayerScore(playerToMove, board) === 980;
         if (depth === 0 || playerFinished) {
           return evaluate(board, playerToMove);
         }

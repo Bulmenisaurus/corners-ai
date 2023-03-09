@@ -35,6 +35,8 @@ export const findMove = (board: Board, aiColor: Player): Move => {
 
     const endTime = Date.now();
     console.log(`Took ${endTime - startTime}ms to evaluate positions`);
+    console.log(`Evaluated ${TIMES_TO_EVAL} position`);
+    TIMES_TO_EVAL = 0;
 
     return bestMove;
 };
@@ -54,7 +56,9 @@ const orderMoves = (moves: Move[], playerToMove: Player) => {
     );
 };
 
+let TIMES_TO_EVAL = 0;
 const evaluateMove = (move: Move, playerToMove: Player) => {
+    TIMES_TO_EVAL++;
     const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
     const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
 
@@ -80,7 +84,7 @@ const recursiveBoardSearchAlphaBeta = (
     alpha: number,
     beta: number
 ): number => {
-    const playerFinished = countPlayerScore(playerToMove, board) === -20;
+    const playerFinished = countPlayerScore(playerToMove, board) === 980;
     if (depth === 0 || playerFinished) {
         return evaluate(board, playerToMove);
     }

@@ -8,7 +8,7 @@ const main = async (mainElement: HTMLElement) => {
 
     const board = new Board.InteractiveBoard(boardElement);
     board.loadFen('4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP');
-
+    //test positing:board.loadFen('4PPPP/5PPP/6PP/7P/1p/pp/ppp/pppp');
     Board.renderBoard(board, boardElement);
 };
 
