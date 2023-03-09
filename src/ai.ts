@@ -4,21 +4,22 @@ import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
 export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
     const myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
-    // console.log(`There are ${myPiecesMoves.length} possible responses`);
 
     let bestMove: Move = myPiecesMoves[0];
     let bestMoveScore = -Infinity;
 
     const startTime = Date.now();
-    // const bestMove = moveSearch(1, board, aiColor);
 
     for (const move of myPiecesMoves) {
         board.doMove(move);
         // we just made a move, so now its time to evaluate from the perspective of the opponent
-        const opponentScore = recursiveBoardSearch(
+
+        const opponentScore = recursiveBoardSearchAlphaBeta(
             2,
             board,
-            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE
+            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
+            -Infinity,
+            Infinity
         );
 
         board.undoMove(move);
@@ -37,9 +38,13 @@ export const findMove = (board: Board, aiColor: Piece): Move | undefined => {
     return bestMove;
 };
 
-//! The scoring: higher is better
-
-const recursiveBoardSearch = (depth: number, board: Board, playerToMove: Piece): number => {
+const recursiveBoardSearchAlphaBeta = (
+    depth: number,
+    board: Board,
+    playerToMove: Piece,
+    alpha: number,
+    beta: number
+): number => {
     const playerFinished = countPlayerScore(playerToMove, board) === -20;
     if (depth === 0 || playerFinished) {
         return evaluate(board, playerToMove);
@@ -47,23 +52,24 @@ const recursiveBoardSearch = (depth: number, board: Board, playerToMove: Piece):
 
     const moves: Move[] = generateAllMoves(board, playerToMove);
 
-    let bestEvaluation: number = -Infinity;
-
     for (const move of moves) {
         board.doMove(move);
-        const evaluation: number = -recursiveBoardSearch(
+        const evaluation: number = -recursiveBoardSearchAlphaBeta(
             depth - 1,
             board,
-            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
+            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK,
+            -beta,
+            -alpha
         );
+        board.undoMove(move);
 
-        if (evaluation > bestEvaluation) {
-            bestEvaluation = evaluation;
+        if (evaluation >= beta) {
+            return beta;
         }
 
-        board.undoMove(move);
+        alpha = Math.max(alpha, evaluation);
     }
-    return bestEvaluation;
+    return alpha;
 };
 
 /**

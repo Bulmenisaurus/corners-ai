@@ -157,7 +157,7 @@
   });
 
   // src/ai.ts
-  var findMove, recursiveBoardSearch, evaluate, countPlayerScore;
+  var findMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
@@ -171,10 +171,12 @@
         const startTime = Date.now();
         for (const move of myPiecesMoves) {
           board.doMove(move);
-          const opponentScore = recursiveBoardSearch(
+          const opponentScore = recursiveBoardSearchAlphaBeta(
             2,
             board,
-            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE
+            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
+            -Infinity,
+            Infinity
           );
           board.undoMove(move);
           const ourScore = -opponentScore;
@@ -187,26 +189,28 @@
         console.log(`Took ${endTime - startTime}ms to evaluate positions`);
         return bestMove;
       };
-      recursiveBoardSearch = (depth, board, playerToMove) => {
+      recursiveBoardSearchAlphaBeta = (depth, board, playerToMove, alpha, beta) => {
         const playerFinished = countPlayerScore(playerToMove, board) === -20;
         if (depth === 0 || playerFinished) {
           return evaluate(board, playerToMove);
         }
         const moves = generateAllMoves(board, playerToMove);
-        let bestEvaluation = -Infinity;
         for (const move of moves) {
           board.doMove(move);
-          const evaluation = -recursiveBoardSearch(
+          const evaluation = -recursiveBoardSearchAlphaBeta(
             depth - 1,
             board,
-            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK
+            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK,
+            -beta,
+            -alpha
           );
-          if (evaluation > bestEvaluation) {
-            bestEvaluation = evaluation;
-          }
           board.undoMove(move);
+          if (evaluation >= beta) {
+            return beta;
+          }
+          alpha = Math.max(alpha, evaluation);
         }
-        return bestEvaluation;
+        return alpha;
       };
       evaluate = (board, playerToMove) => {
         const whiteScore = countPlayerScore(PIECE_WHITE, board);
@@ -452,4 +456,3 @@
   });
   require_src();
 })();
-//! The scoring: higher is better
