@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "./node_modules/.bin/esbuild src/index.ts --bundle --outdir=dist",
-    "build:watch": "./node_modules/.bin/esbuild src/index.ts --bundle --outdir=dist --watch"
+    "build": "./node_modules/.bin/esbuild src/index.ts src/worker.ts --bundle --outdir=dist && ",
+    "build:watch": "./node_modules/.bin/esbuild src/index.ts src/worker.ts --bundle --outdir=dist --watch"
   },
   "repository": {
     "type": "git",

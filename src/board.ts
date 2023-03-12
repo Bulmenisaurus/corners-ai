@@ -14,17 +14,17 @@ export const TILE_WHITE = 'white';
 export type Tile = typeof TILE_BLACK | typeof TILE_WHITE;
 
 export class Board {
-    board: Piece[];
-    constructor() {
-        this.board = Array<Piece>(8 * 8).fill(PIECE_NONE);
+    pieces: Piece[];
+    constructor(board: Array<Piece>) {
+        this.pieces = board;
     }
 
     getPiece(x: number, y: number): Piece {
-        return this.board[x + y * 8];
+        return this.pieces[x + y * 8];
     }
 
     setPiece(x: number, y: number, piece: Piece) {
-        this.board[x + y * 8] = piece;
+        this.pieces[x + y * 8] = piece;
     }
 
     getTileColor(x: number, y: number): Tile {
@@ -62,9 +62,11 @@ export class InteractiveBoard {
     boardTileContainers: HTMLDivElement[];
     selectedTileCoordinates: undefined | [number, number];
     currentTurn: Player;
+    aiWorker: Worker;
     constructor(boardElement: HTMLElement) {
-        this.board = new Board();
+        this.board = new Board(Array<Piece>(8 * 8).fill(PIECE_NONE));
         this.currentTurn = 'white';
+        this.aiWorker = new Worker('./dist/worker.js');
 
         this.boardElement = boardElement;
         this.boardTileContainers = this._initializeTileElements();
@@ -74,6 +76,10 @@ export class InteractiveBoard {
         boardElement.addEventListener('click', (ev) => {
             this.onClick(ev);
         });
+
+        this.aiWorker.onmessage = (e) => {
+            this.receiveAiMove(e.data);
+        };
     }
 
     _initializeTileElements() {
@@ -198,8 +204,11 @@ export class InteractiveBoard {
         });
     }
 
-    aiMove() {
-        const move = findMove(this.board, this.currentTurn);
+    initiateAiMove() {
+        this.aiWorker.postMessage([this.board.pieces, this.currentTurn]);
+    }
+
+    receiveAiMove(move: Move) {
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
 
         if (move === undefined) {
@@ -256,9 +265,7 @@ export class InteractiveBoard {
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
 
-        window.setTimeout(() => {
-            this.aiMove();
-        }, 0);
+        this.initiateAiMove();
     }
 }
 

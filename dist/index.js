@@ -29,7 +29,7 @@
   };
 
   // src/moves.ts
-  var deduplicateMovesByStartEnd, generateAllMovesFromTile, generateAllMoves, cloneMove, recursiveSearchMoves;
+  var deduplicateMovesByStartEnd, generateAllMovesFromTile, cloneMove, recursiveSearchMoves;
   var init_moves = __esm({
     "src/moves.ts"() {
       "use strict";
@@ -71,18 +71,6 @@
           false
         );
         return deduplicateMovesByStartEnd(moves);
-      };
-      generateAllMoves = (board, pieceColor) => {
-        const moves = [];
-        for (const coordinate of board.coordinates()) {
-          const tileOurColor = board.getPiece(coordinate[0], coordinate[1]) === pieceColor;
-          if (!tileOurColor) {
-            continue;
-          }
-          const tileMoves = generateAllMovesFromTile(coordinate[0], coordinate[1], board);
-          tileMoves.forEach((m) => moves.push(m));
-        }
-        return moves;
       };
       cloneMove = (move) => {
         return {
@@ -166,86 +154,12 @@
   });
 
   // src/ai.ts
-  var findMove, orderMoves, TIMES_TO_EVAL, evaluateMove, recursiveBoardSearchAlphaBeta, evaluate, countPlayerScore;
+  var countPlayerScore;
   var init_ai = __esm({
     "src/ai.ts"() {
       "use strict";
       init_board();
       init_moves();
-      findMove = (board, aiColor) => {
-        const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
-        let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
-        myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
-        let bestMove = myPiecesMoves[0];
-        let bestMoveScore = -Infinity;
-        const startTime = Date.now();
-        for (const move of myPiecesMoves) {
-          board.doMove(move);
-          const opponentScore = recursiveBoardSearchAlphaBeta(
-            3,
-            board,
-            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
-            -Infinity,
-            Infinity
-          );
-          board.undoMove(move);
-          const ourScore = -opponentScore;
-          if (ourScore > bestMoveScore) {
-            bestMoveScore = ourScore;
-            bestMove = move;
-          }
-        }
-        const endTime = Date.now();
-        console.log(`Took ${endTime - startTime}ms to evaluate positions`);
-        console.log(`Evaluated ${TIMES_TO_EVAL} position`);
-        TIMES_TO_EVAL = 0;
-        return bestMove;
-      };
-      orderMoves = (moves, playerToMove) => {
-        return moves.sort((moveA, moveB) => {
-          return evaluateMove(moveA, playerToMove) - evaluateMove(moveB, playerToMove);
-        }).reverse();
-      };
-      TIMES_TO_EVAL = 0;
-      evaluateMove = (move, playerToMove) => {
-        TIMES_TO_EVAL++;
-        const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
-        const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
-        const initialDistance = Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
-        const endingDistance = Math.abs(move.toX - oppositeCornerX) + Math.abs(move.toY - oppositeCornerY);
-        const moveScore = initialDistance - endingDistance;
-        return moveScore;
-      };
-      recursiveBoardSearchAlphaBeta = (depth, board, playerToMove, alpha, beta) => {
-        const playerFinished = countPlayerScore(playerToMove, board) === 980;
-        if (depth === 0 || playerFinished) {
-          return evaluate(board, playerToMove);
-        }
-        const moves = generateAllMoves(board, playerToMove);
-        for (const move of moves) {
-          board.doMove(move);
-          const evaluation = -recursiveBoardSearchAlphaBeta(
-            depth - 1,
-            board,
-            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK,
-            -beta,
-            -alpha
-          );
-          board.undoMove(move);
-          if (evaluation >= beta) {
-            return beta;
-          }
-          alpha = Math.max(alpha, evaluation);
-        }
-        return alpha;
-      };
-      evaluate = (board, playerToMove) => {
-        const whiteScore = countPlayerScore(PIECE_WHITE, board);
-        const blackScore = countPlayerScore(PIECE_BLACK, board);
-        const evaluation = whiteScore - blackScore;
-        const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
-        return evaluation * perspective;
-      };
       countPlayerScore = (player, board) => {
         const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
         const oppositeCornerY = player === PIECE_BLACK ? 7 : 0;
@@ -273,14 +187,14 @@
       TILE_BLACK = "black";
       TILE_WHITE = "white";
       Board3 = class {
-        constructor() {
-          this.board = Array(8 * 8).fill(PIECE_NONE);
+        constructor(board) {
+          this.pieces = board;
         }
         getPiece(x, y) {
-          return this.board[x + y * 8];
+          return this.pieces[x + y * 8];
         }
         setPiece(x, y, piece) {
-          this.board[x + y * 8] = piece;
+          this.pieces[x + y * 8] = piece;
         }
         getTileColor(x, y) {
           return [TILE_WHITE, TILE_BLACK][(x + y) % 2];
@@ -307,14 +221,18 @@
       };
       InteractiveBoard = class {
         constructor(boardElement) {
-          this.board = new Board3();
+          this.board = new Board3(Array(8 * 8).fill(PIECE_NONE));
           this.currentTurn = "white";
+          this.aiWorker = new Worker("./dist/worker.js");
           this.boardElement = boardElement;
           this.boardTileContainers = this._initializeTileElements();
           this.selectedTileCoordinates = void 0;
           boardElement.addEventListener("click", (ev) => {
             this.onClick(ev);
           });
+          this.aiWorker.onmessage = (e) => {
+            this.receiveAiMove(e.data);
+          };
         }
         _initializeTileElements() {
           const tileContainers = this.board.coordinates().map(([x, y]) => {
@@ -411,8 +329,10 @@
             tile.classList.add("mark");
           });
         }
-        aiMove() {
-          const move = findMove(this.board, this.currentTurn);
+        initiateAiMove() {
+          this.aiWorker.postMessage([this.board.pieces, this.currentTurn]);
+        }
+        receiveAiMove(move) {
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
           if (move === void 0) {
             console.warn("AI has no response, probably end of game?");
@@ -452,9 +372,7 @@
           this.doMove(thisMove);
           console.log(`My score: ${countPlayerScore(PIECE_WHITE, this.board)}`);
           this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-          window.setTimeout(() => {
-            this.aiMove();
-          }, 0);
+          this.initiateAiMove();
         }
       };
       renderBoard = (board, boardContainer) => {
