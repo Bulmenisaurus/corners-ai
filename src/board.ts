@@ -45,6 +45,7 @@ export class Board {
 
     doMove(move: Move) {
         const pieceToMove = this.getPiece(move.fromX, move.fromY);
+
         this.setPiece(move.fromX, move.fromY, PIECE_NONE);
         this.setPiece(move.toX, move.toY, pieceToMove);
     }
@@ -59,17 +60,23 @@ export class Board {
 export class InteractiveBoard {
     board: Board;
     boardElement: HTMLElement;
-    boardTileContainers: HTMLDivElement[];
     selectedTileCoordinates: undefined | [number, number];
     currentTurn: Player;
     aiWorker: Worker;
-    constructor(boardElement: HTMLElement) {
+    tilesElement: HTMLDivElement;
+    piecesElement: HTMLDivElement;
+    constructor(
+        boardElement: HTMLElement,
+        tileContainer: HTMLDivElement,
+        piecesContainer: HTMLDivElement
+    ) {
         this.board = new Board(Array<Piece>(8 * 8).fill(PIECE_NONE));
         this.currentTurn = 'white';
         this.aiWorker = new Worker('./dist/worker.js');
 
         this.boardElement = boardElement;
-        this.boardTileContainers = this._initializeTileElements();
+        this.tilesElement = tileContainer;
+        this.piecesElement = piecesContainer;
 
         this.selectedTileCoordinates = undefined;
 
@@ -80,6 +87,8 @@ export class InteractiveBoard {
         this.aiWorker.onmessage = (e) => {
             this.receiveAiMove(e.data);
         };
+
+        this._initializeTileElements();
     }
 
     _initializeTileElements() {
@@ -89,17 +98,10 @@ export class InteractiveBoard {
             tileContainer.classList.add(this.getTileColor(x, y) === TILE_BLACK ? 'black' : 'white');
             tileContainer.dataset.selected = 'false';
 
-            const tilePiece = this.board.getPiece(x, y);
-
-            const pieceElement = document.createElement('div');
-            pieceElement.classList.add('piece');
-            pieceElement.dataset.pieceType = tilePiece;
-            tileContainer.appendChild(pieceElement);
-
             return tileContainer;
         });
 
-        return tileContainers;
+        this.tilesElement.append(...tileContainers);
     }
 
     loadFen(fen: string) {
@@ -124,15 +126,52 @@ export class InteractiveBoard {
     }
 
     getTileElement(x: number, y: number): HTMLDivElement {
-        return this.boardTileContainers[x + y * 8];
+        const tileElements = Array.from(this.tilesElement.children) as HTMLDivElement[];
+
+        return tileElements[x + y * 8];
+    }
+
+    getPieceElement(x: number, y: number): HTMLDivElement {
+        const allPieces = Array.from(this.piecesElement.children) as HTMLDivElement[];
+
+        const pieceElement = allPieces.find(
+            (piece) => piece.dataset.x === x.toString() && piece.dataset.y === y.toString()
+        );
+
+        return pieceElement!;
     }
 
     setPiece(x: number, y: number, piece: Piece) {
-        this.board.setPiece(x, y, piece);
+        if (this.board.getPiece(x, y) === PIECE_NONE) {
+            // if the tile at (x, y) is empty, create a new piece element
+            this.board.setPiece(x, y, piece);
 
-        const tileElement = this.getTileElement(x, y);
-        const pieceElement = tileElement.children[0] as HTMLElement;
-        pieceElement.dataset.pieceType = piece;
+            const pieceElement = document.createElement('div');
+            pieceElement.classList.add('piece');
+            pieceElement.dataset.pieceType = piece;
+            pieceElement.dataset.x = x.toString();
+            pieceElement.dataset.y = y.toString();
+            pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8 - 10px) * 0.10)`;
+            pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8 - 10px) * 0.10)`;
+            this.piecesElement.appendChild(pieceElement);
+        }
+        {
+            // otherwise, set an existing pieces coords
+            const pieceElement = this.getPieceElement(x, y);
+            pieceElement.dataset.pieceType = piece;
+        }
+    }
+
+    movePiece(fromX: number, fromY: number, toX: number, toY: number) {
+        const pieceElement = this.getPieceElement(fromX, fromY);
+        pieceElement.dataset.x = toX.toString();
+        pieceElement.dataset.y = toY.toString();
+        pieceElement.style.top = `calc(100%/8 * ${toY} + (100%/8 - 10px) * 0.10)`;
+        pieceElement.style.left = `calc(100%/8 * ${toX} + (100%/8 - 10px) * 0.10)`;
+
+        this.board.setPiece(toX, toY, this.board.getPiece(fromX, fromY));
+
+        this.board.setPiece(fromX, fromY, PIECE_NONE);
     }
 
     select(x: number, y: number) {
@@ -219,12 +258,8 @@ export class InteractiveBoard {
         }
     }
 
-    // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
-    // well, in InteractiveBoard this.setPiece updates the UI in addition to the board state
     doMove(move: Move) {
-        const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
-        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
-        this.setPiece(move.toX, move.toY, pieceToMove);
+        this.movePiece(move.fromX, move.fromY, move.toX, move.toY);
     }
 
     undoMove(move: Move) {
@@ -270,5 +305,5 @@ export class InteractiveBoard {
 }
 
 export const renderBoard = (board: InteractiveBoard, boardContainer: HTMLDivElement) => {
-    boardContainer.append(...board.boardTileContainers);
+    boardContainer.append(board.tilesElement, board.piecesElement);
 };

@@ -220,12 +220,13 @@
         }
       };
       InteractiveBoard = class {
-        constructor(boardElement) {
+        constructor(boardElement, tileContainer, piecesContainer) {
           this.board = new Board3(Array(8 * 8).fill(PIECE_NONE));
           this.currentTurn = "white";
           this.aiWorker = new Worker("./dist/worker.js");
           this.boardElement = boardElement;
-          this.boardTileContainers = this._initializeTileElements();
+          this.tilesElement = tileContainer;
+          this.piecesElement = piecesContainer;
           this.selectedTileCoordinates = void 0;
           boardElement.addEventListener("click", (ev) => {
             this.onClick(ev);
@@ -233,6 +234,7 @@
           this.aiWorker.onmessage = (e) => {
             this.receiveAiMove(e.data);
           };
+          this._initializeTileElements();
         }
         _initializeTileElements() {
           const tileContainers = this.board.coordinates().map(([x, y]) => {
@@ -240,14 +242,9 @@
             tileContainer.classList.add("tile");
             tileContainer.classList.add(this.getTileColor(x, y) === TILE_BLACK ? "black" : "white");
             tileContainer.dataset.selected = "false";
-            const tilePiece = this.board.getPiece(x, y);
-            const pieceElement = document.createElement("div");
-            pieceElement.classList.add("piece");
-            pieceElement.dataset.pieceType = tilePiece;
-            tileContainer.appendChild(pieceElement);
             return tileContainer;
           });
-          return tileContainers;
+          this.tilesElement.append(...tileContainers);
         }
         loadFen(fen) {
           const rows = fen.split("/");
@@ -270,13 +267,41 @@
           }
         }
         getTileElement(x, y) {
-          return this.boardTileContainers[x + y * 8];
+          const tileElements = Array.from(this.tilesElement.children);
+          return tileElements[x + y * 8];
+        }
+        getPieceElement(x, y) {
+          const allPieces = Array.from(this.piecesElement.children);
+          const pieceElement = allPieces.find(
+            (piece) => piece.dataset.x === x.toString() && piece.dataset.y === y.toString()
+          );
+          return pieceElement;
         }
         setPiece(x, y, piece) {
-          this.board.setPiece(x, y, piece);
-          const tileElement = this.getTileElement(x, y);
-          const pieceElement = tileElement.children[0];
-          pieceElement.dataset.pieceType = piece;
+          if (this.board.getPiece(x, y) === PIECE_NONE) {
+            this.board.setPiece(x, y, piece);
+            const pieceElement = document.createElement("div");
+            pieceElement.classList.add("piece");
+            pieceElement.dataset.pieceType = piece;
+            pieceElement.dataset.x = x.toString();
+            pieceElement.dataset.y = y.toString();
+            pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8 - 10px) * 0.10)`;
+            pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8 - 10px) * 0.10)`;
+            this.piecesElement.appendChild(pieceElement);
+          }
+          {
+            const pieceElement = this.getPieceElement(x, y);
+            pieceElement.dataset.pieceType = piece;
+          }
+        }
+        movePiece(fromX, fromY, toX, toY) {
+          const pieceElement = this.getPieceElement(fromX, fromY);
+          pieceElement.dataset.x = toX.toString();
+          pieceElement.dataset.y = toY.toString();
+          pieceElement.style.top = `calc(100%/8 * ${toY} + (100%/8 - 10px) * 0.10)`;
+          pieceElement.style.left = `calc(100%/8 * ${toX} + (100%/8 - 10px) * 0.10)`;
+          this.board.setPiece(toX, toY, this.board.getPiece(fromX, fromY));
+          this.board.setPiece(fromX, fromY, PIECE_NONE);
         }
         select(x, y) {
           const tileElement = this.getTileElement(x, y);
@@ -341,12 +366,8 @@
             this.markMove(move);
           }
         }
-        // note: there are `doMove` and `undoMove` in `this.board` (non-ui) with the same exact code, what is the different?
-        // well, in InteractiveBoard this.setPiece updates the UI in addition to the board state
         doMove(move) {
-          const pieceToMove = this.board.getPiece(move.fromX, move.fromY);
-          this.setPiece(move.fromX, move.fromY, PIECE_NONE);
-          this.setPiece(move.toX, move.toY, pieceToMove);
+          this.movePiece(move.fromX, move.fromY, move.toX, move.toY);
         }
         undoMove(move) {
           const pieceToMove = this.board.getPiece(move.toX, move.toY);
@@ -376,7 +397,7 @@
         }
       };
       renderBoard = (board, boardContainer) => {
-        boardContainer.append(...board.boardTileContainers);
+        boardContainer.append(board.tilesElement, board.piecesElement);
       };
     }
   });
@@ -386,12 +407,16 @@
     "src/index.ts"(exports) {
       init_board();
       var main = (mainElement) => __async(exports, null, function* () {
-        const boardElement = document.createElement("div");
-        boardElement.id = "board-container";
-        mainElement.appendChild(boardElement);
-        const board = new InteractiveBoard(boardElement);
+        const boardContainer = document.createElement("div");
+        boardContainer.id = "board-container";
+        mainElement.appendChild(boardContainer);
+        const tileContainer = document.createElement("div");
+        tileContainer.id = "tiles";
+        const piecesContainer = document.createElement("div");
+        piecesContainer.id = "pieces";
+        const board = new InteractiveBoard(boardContainer, tileContainer, piecesContainer);
         board.loadFen("4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP");
-        renderBoard(board, boardElement);
+        renderBoard(board, boardContainer);
       });
       window.addEventListener("load", () => {
         const mainElement = document.getElementsByTagName("main")[0];
