@@ -181,7 +181,7 @@
     for (const move of myPiecesMoves) {
       board.doMove(move);
       const opponentScore = recursiveBoardSearchAlphaBeta(
-        3,
+        2,
         board,
         aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
         -Infinity,

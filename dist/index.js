@@ -298,6 +298,10 @@
           const pieceElement = this.getPieceElement(fromX, fromY);
           pieceElement.dataset.x = toX.toString();
           pieceElement.dataset.y = toY.toString();
+          pieceElement.style.zIndex = "1";
+          window.setTimeout(() => {
+            pieceElement.style.zIndex = "";
+          }, 1e3);
           pieceElement.style.top = `calc(100%/8 * ${toY} + (100%/8 - 10px) * 0.10)`;
           pieceElement.style.left = `calc(100%/8 * ${toX} + (100%/8 - 10px) * 0.10)`;
           this.board.setPiece(toX, toY, this.board.getPiece(fromX, fromY));

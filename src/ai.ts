@@ -16,7 +16,7 @@ export const findMove = (board: Board, aiColor: Player): Move => {
         // we just made a move, so now its time to evaluate from the perspective of the opponent
 
         const opponentScore = recursiveBoardSearchAlphaBeta(
-            3,
+            2,
             board,
             aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
             -Infinity,
