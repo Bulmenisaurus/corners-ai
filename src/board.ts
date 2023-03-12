@@ -251,7 +251,7 @@ export class InteractiveBoard {
         this.aiWorker.postMessage([this.board.pieces, this.currentTurn]);
     }
 
-    receiveAiMove(move: Move) {
+    receiveAiMove(move: Move | undefined) {
         this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
 
         if (move === undefined) {

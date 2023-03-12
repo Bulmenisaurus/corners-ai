@@ -172,6 +172,9 @@
 
   // src/ai.ts
   var findMove2 = (board, aiColor) => {
+    if (countPlayerScore(aiColor, board) === 980) {
+      return void 0;
+    }
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
     let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
     myPiecesMoves = orderMoves(myPiecesMoves, aiColor);

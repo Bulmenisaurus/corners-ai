@@ -1,7 +1,11 @@
 import { Board, Piece, Player, PIECE_BLACK, PIECE_WHITE } from './board';
 import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
 
-export const findMove = (board: Board, aiColor: Player): Move => {
+export const findMove = (board: Board, aiColor: Player): Move | undefined => {
+    if (countPlayerScore(aiColor, board) === 980) {
+        return undefined;
+    }
+
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
     let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
     myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
