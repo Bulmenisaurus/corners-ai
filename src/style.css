@@ -62,6 +62,7 @@ main {
     width: 100%;
     height: 100%;
     aspect-ratio: 1/1;
+    transition: transform 1s;
 }
 
 #board-container .tile.black {

@@ -65,6 +65,8 @@ export class InteractiveBoard {
     aiWorker: Worker;
     tilesElement: HTMLDivElement;
     piecesElement: HTMLDivElement;
+    EZ_ENABLED: boolean;
+    EZ_TIMES: number;
     constructor(
         boardElement: HTMLElement,
         tileContainer: HTMLDivElement,
@@ -77,6 +79,9 @@ export class InteractiveBoard {
         this.boardElement = boardElement;
         this.tilesElement = tileContainer;
         this.piecesElement = piecesContainer;
+
+        this.EZ_ENABLED = false;
+        this.EZ_TIMES = 0;
 
         this.selectedTileCoordinates = undefined;
 
@@ -219,7 +224,9 @@ export class InteractiveBoard {
 
     onTileClick(tileX: number, tileY: number) {
         const prevSelectedCoords = this.selectedTileCoordinates;
-        // this.clearSuggestions();
+        this.EZ_onTileClick(tileX, tileY);
+
+        // if (this.EZ_ENABLED) this.clearSuggestions();
 
         if (prevSelectedCoords !== undefined) {
             this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
@@ -234,7 +241,7 @@ export class InteractiveBoard {
 
             this.selectedTileCoordinates = [tileX, tileY];
             this.select(tileX, tileY);
-            // this.addSuggestions(tileX, tileY);
+            // if (this.EZ_ENABLED) this.addSuggestions(tileX, tileY);
         }
     }
 
@@ -250,7 +257,8 @@ export class InteractiveBoard {
     }
 
     initiateAiMove() {
-        this.aiWorker.postMessage([this.board.pieces, this.currentTurn]);
+        console.log(this.EZ_ENABLED);
+        this.aiWorker.postMessage([this.board.pieces, this.currentTurn, this.EZ_ENABLED]);
     }
 
     receiveAiMove(move: Move | undefined) {
@@ -308,6 +316,18 @@ export class InteractiveBoard {
         // moveAudio.play();
 
         this.initiateAiMove();
+    }
+
+    EZ_onTileClick(x: number, y: number) {
+        this.EZ_TIMES += x + y ? -this.EZ_TIMES : 1;
+        this.EZ_ENABLED ||= this.EZ_TIMES > 2;
+        if (this.EZ_ENABLED) {
+            this.EZ_playAnimation();
+        }
+    }
+
+    EZ_playAnimation() {
+        this.getTileElement(0, 0).style.transform = 'rotate(360deg)';
     }
 }
 
