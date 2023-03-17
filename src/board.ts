@@ -238,9 +238,11 @@ export class InteractiveBoard {
         }
     }
 
-    markMove(move: Move) {
+    removeMarks() {
         Array.from(document.querySelectorAll('.mark')).map((v) => v.classList.remove('mark'));
+    }
 
+    markMove(move: Move) {
         move.fullMovePath.forEach(([x, y]) => {
             const tile = this.getTileElement(x, y);
             tile.classList.add('mark');
@@ -264,6 +266,7 @@ export class InteractiveBoard {
 
     doMove(move: Move) {
         this.movePiece(move.fromX, move.fromY, move.toX, move.toY);
+        this.removeMarks();
     }
 
     undoMove(move: Move) {
