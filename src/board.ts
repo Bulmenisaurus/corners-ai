@@ -257,7 +257,6 @@ export class InteractiveBoard {
     }
 
     initiateAiMove() {
-        console.log(this.EZ_ENABLED);
         this.aiWorker.postMessage([this.board.pieces, this.currentTurn, this.EZ_ENABLED]);
     }
 
