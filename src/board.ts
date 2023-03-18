@@ -167,20 +167,27 @@ export class InteractiveBoard {
         }
     }
 
-    movePiece(fromX: number, fromY: number, toX: number, toY: number) {
+    uiAnimateMove(move: Move) {
+        const { fromX, fromY, toX, toY } = move;
         const pieceElement = this.getPieceElement(fromX, fromY);
         pieceElement.dataset.x = toX.toString();
         pieceElement.dataset.y = toY.toString();
+
+        const pieceAnimationTimeMS = Math.min(1000 / (move.fullMovePath.length - 1), 500);
+        pieceElement.style.transitionDuration = `${pieceAnimationTimeMS}ms`;
+
+        for (let i = 1; i < move.fullMovePath.length; i++) {
+            const [x, y] = move.fullMovePath[i];
+            window.setTimeout(() => {
+                pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8 - 10px) * 0.10)`;
+                pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8 - 10px) * 0.10)`;
+            }, pieceAnimationTimeMS * (i - 1));
+        }
+
         pieceElement.style.zIndex = '1';
         window.setTimeout(() => {
             pieceElement.style.zIndex = '';
-        }, 1000);
-        pieceElement.style.top = `calc(100%/8 * ${toY} + (100%/8 - 10px) * 0.10)`;
-        pieceElement.style.left = `calc(100%/8 * ${toX} + (100%/8 - 10px) * 0.10)`;
-
-        this.board.setPiece(toX, toY, this.board.getPiece(fromX, fromY));
-
-        this.board.setPiece(fromX, fromY, PIECE_NONE);
+        }, pieceAnimationTimeMS * move.fullMovePath.length);
     }
 
     select(x: number, y: number) {
@@ -272,7 +279,10 @@ export class InteractiveBoard {
     }
 
     doMove(move: Move) {
-        this.movePiece(move.fromX, move.fromY, move.toX, move.toY);
+        this.board.setPiece(move.toX, move.toY, this.board.getPiece(move.fromX, move.fromY));
+        this.board.setPiece(move.fromX, move.fromY, PIECE_NONE);
+
+        this.uiAnimateMove(move);
         this.removeMarks();
     }
 
@@ -314,7 +324,9 @@ export class InteractiveBoard {
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
 
-        this.initiateAiMove();
+        window.setTimeout(() => {
+            this.initiateAiMove();
+        }, 1000);
     }
 
     EZ_onTileClick(x: number, y: number) {
