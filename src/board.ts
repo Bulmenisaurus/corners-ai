@@ -1,15 +1,6 @@
 import { InteractiveBoard } from './interactiveBoard';
 import { Move } from './moves';
-import {
-    Piece,
-    PIECE_BLACK,
-    PIECE_NONE,
-    PIECE_WHITE,
-    Player,
-    Tile,
-    TILE_BLACK,
-    TILE_WHITE,
-} from './types';
+import { Piece, Player, Tile } from './types';
 
 export class Board {
     pieces: Piece[];
@@ -26,7 +17,7 @@ export class Board {
     }
 
     getTileColor(x: number, y: number): Tile {
-        return [TILE_WHITE as Tile, TILE_BLACK as Tile][(x + y) % 2];
+        return (<Tile[]>['white', 'black'])[(x + y) % 2];
     }
 
     coordinates(): [number, number][] {
@@ -44,14 +35,14 @@ export class Board {
     doMove(move: Move) {
         const pieceToMove = this.getPiece(move.fromX, move.fromY);
 
-        this.setPiece(move.fromX, move.fromY, PIECE_NONE);
+        this.setPiece(move.fromX, move.fromY, 'none');
         this.setPiece(move.toX, move.toY, pieceToMove);
     }
 
     undoMove(move: Move) {
         const pieceToMove = this.getPiece(move.toX, move.toY);
         this.setPiece(move.fromX, move.fromY, pieceToMove);
-        this.setPiece(move.toX, move.toY, PIECE_NONE);
+        this.setPiece(move.toX, move.toY, 'none');
     }
 }
 

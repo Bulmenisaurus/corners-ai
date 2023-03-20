@@ -1,5 +1,5 @@
 import { Board } from './board';
-import { Piece, PIECE_NONE } from './types';
+import { Piece } from './types';
 
 export interface Move {
     fromX: number;
@@ -125,7 +125,7 @@ const recursiveSearchMoves = (
         }
 
         // check if there is already a piece there
-        if (board.getPiece(newX, newY) != PIECE_NONE) {
+        if (board.getPiece(newX, newY) !== 'none') {
             continue;
         }
 
@@ -153,10 +153,10 @@ const recursiveSearchMoves = (
         const jumpY = pieceY + offsetY;
 
         // check that the coordinates we are jumping over are actually occupied ...
-        const isSomeoneToJumpOver = board.getPiece(jumpX, jumpY) != PIECE_NONE;
+        const isSomeoneToJumpOver = board.getPiece(jumpX, jumpY) != 'none';
 
         // ... and that the place we are jumping to is unoccupied ...
-        const isSomewhereToLand = board.getPiece(newX, newY) == PIECE_NONE;
+        const isSomewhereToLand = board.getPiece(newX, newY) == 'none';
 
         // ... and that we haven't already been there, to not jump back and forth
         const hasBeenHereBefore = currentMoveData.fullMovePath.some(([moveX, moveY]) => {

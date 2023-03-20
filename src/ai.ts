@@ -1,6 +1,6 @@
 import { Board } from './board';
 import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
-import { DIFFICULTY, Piece, PIECE_BLACK, PIECE_WHITE, Player } from './types';
+import { DIFFICULTY, Piece, Player } from './types';
 
 export const findMove = (
     board: Board,
@@ -33,7 +33,7 @@ export const findMove = (
         const opponentScore = recursiveBoardSearchAlphaBeta(
             moveDepthSearch,
             board,
-            aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
+            aiColor === 'white' ? 'black' : 'white',
             -Infinity,
             Infinity
         );
@@ -77,8 +77,8 @@ const orderMoves = (moves: Move[], playerToMove: Player) => {
 let TIMES_TO_EVAL = 0;
 const evaluateMove = (move: Move, playerToMove: Player) => {
     TIMES_TO_EVAL++;
-    const oppositeCornerX = playerToMove === PIECE_BLACK ? 0 : 7;
-    const oppositeCornerY = playerToMove === PIECE_BLACK ? 7 : 0;
+    const oppositeCornerX = playerToMove === 'black' ? 0 : 7;
+    const oppositeCornerY = playerToMove === 'white' ? 7 : 0;
 
     const initialDistance =
         Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
@@ -114,7 +114,7 @@ const recursiveBoardSearchAlphaBeta = (
         const evaluation: number = -recursiveBoardSearchAlphaBeta(
             depth - 1,
             board,
-            playerToMove === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK,
+            playerToMove === 'black' ? 'white' : 'black',
             -beta,
             -alpha
         );
@@ -137,11 +137,11 @@ const recursiveBoardSearchAlphaBeta = (
  *  - 0 if it is a tie.
  */
 const evaluate = (board: Board, playerToMove: Player) => {
-    const whiteScore = countPlayerScore(PIECE_WHITE, board);
-    const blackScore = countPlayerScore(PIECE_BLACK, board);
+    const whiteScore = countPlayerScore('white', board);
+    const blackScore = countPlayerScore('black', board);
 
     const evaluation = whiteScore - blackScore;
-    const perspective = playerToMove === PIECE_WHITE ? 1 : -1;
+    const perspective = playerToMove === 'white' ? 1 : -1;
 
     return evaluation * perspective;
 };
@@ -149,8 +149,8 @@ const evaluate = (board: Board, playerToMove: Player) => {
 export const countPlayerScore = (player: Piece, board: Board) => {
     // count cumulative distances from the opposite corner
 
-    const oppositeCornerX = player === PIECE_BLACK ? 0 : 7;
-    const oppositeCornerY = player === PIECE_BLACK ? 7 : 0;
+    const oppositeCornerX = player === 'black' ? 0 : 7;
+    const oppositeCornerY = player === 'black' ? 7 : 0;
 
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === player);
     const myPiecesDistances = myPieces.map(

@@ -1,16 +1,6 @@
 import { Board } from './board';
 import { Move, generateAllMovesFromTile } from './moves';
-import {
-    Player,
-    Piece,
-    PIECE_NONE,
-    TILE_BLACK,
-    PIECE_WHITE,
-    PIECE_BLACK,
-    Tile,
-    TILE_WHITE,
-    DIFFICULTY,
-} from './types';
+import { Player, Piece, Tile, DIFFICULTY } from './types';
 
 export class InteractiveBoard {
     board: Board;
@@ -26,7 +16,7 @@ export class InteractiveBoard {
         tileContainer: HTMLDivElement,
         piecesContainer: HTMLDivElement
     ) {
-        this.board = new Board(Array<Piece>(8 * 8).fill(PIECE_NONE));
+        this.board = new Board(Array<Piece>(8 * 8).fill('none'));
         this.currentTurn = 'white';
         this.aiWorker = new Worker('./dist/worker.js');
 
@@ -53,7 +43,7 @@ export class InteractiveBoard {
         const tileContainers: HTMLDivElement[] = this.board.coordinates().map(([x, y]) => {
             const tileContainer = document.createElement('div');
             tileContainer.classList.add('tile');
-            tileContainer.classList.add(this.getTileColor(x, y) === TILE_BLACK ? 'black' : 'white');
+            tileContainer.classList.add(this.getTileColor(x, y));
             tileContainer.dataset.selected = 'false';
 
             return tileContainer;
@@ -69,10 +59,10 @@ export class InteractiveBoard {
         for (const row of rows) {
             for (const char of row) {
                 if (char === 'P') {
-                    this.setPiece(currentX, currentY, PIECE_WHITE);
+                    this.setPiece(currentX, currentY, 'white');
                     currentX++;
                 } else if (char === 'p') {
-                    this.setPiece(currentX, currentY, PIECE_BLACK);
+                    this.setPiece(currentX, currentY, 'black');
                     currentX++;
                 } else {
                     currentX += parseInt(char);
@@ -100,7 +90,7 @@ export class InteractiveBoard {
     }
 
     setPiece(x: number, y: number, piece: Piece) {
-        if (this.board.getPiece(x, y) === PIECE_NONE) {
+        if (this.board.getPiece(x, y) === 'none') {
             // if the tile at (x, y) is empty, create a new piece element
             this.board.setPiece(x, y, piece);
 
@@ -154,7 +144,7 @@ export class InteractiveBoard {
     }
 
     getTileColor(x: number, y: number): Tile {
-        return [TILE_WHITE as Tile, TILE_BLACK as Tile][(x + y) % 2];
+        return this.board.getTileColor(x, y);
     }
 
     addSuggestions(x: number, y: number) {
@@ -192,7 +182,7 @@ export class InteractiveBoard {
             this.tryMove(prevSelectedCoords[0], prevSelectedCoords[1], tileX, tileY);
         } else {
             // if user had nothing selected and clicked on an empty tile, just do nothing
-            if (this.board.getPiece(tileX, tileY) === PIECE_NONE) {
+            if (this.board.getPiece(tileX, tileY) === 'none') {
                 return;
             }
 
@@ -217,7 +207,7 @@ export class InteractiveBoard {
     }
 
     receiveAiMove(move: Move | undefined) {
-        this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
+        this.currentTurn = this.currentTurn === 'black' ? 'white' : 'black';
 
         if (move === undefined) {
             console.warn('AI has no response, probably end of game?');
@@ -229,7 +219,7 @@ export class InteractiveBoard {
 
     doMove(move: Move) {
         this.board.setPiece(move.toX, move.toY, this.board.getPiece(move.fromX, move.fromY));
-        this.board.setPiece(move.fromX, move.fromY, PIECE_NONE);
+        this.board.setPiece(move.fromX, move.fromY, 'none');
 
         this.uiAnimateMove(move);
         this.removeMarks();
@@ -238,7 +228,7 @@ export class InteractiveBoard {
     undoMove(move: Move) {
         const pieceToMove = this.board.getPiece(move.toX, move.toY);
         this.setPiece(move.fromX, move.fromY, pieceToMove);
-        this.setPiece(move.toX, move.toY, PIECE_NONE);
+        this.setPiece(move.toX, move.toY, 'none');
     }
 
     tryMove(startX: number, startY: number, endX: number, endY: number) {
@@ -268,7 +258,7 @@ export class InteractiveBoard {
 
         // mark it as the other players turn now
 
-        this.currentTurn = this.currentTurn === PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
+        this.currentTurn = this.currentTurn === 'black' ? 'white' : 'black';
         // const moveAudio = new Audio('./audio/wood-sound.mp3');
         // moveAudio.play();
 
