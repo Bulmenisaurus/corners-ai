@@ -1,4 +1,5 @@
-import * as Board from './board';
+import { renderBoard } from './board';
+import { InteractiveBoard } from './interactiveBoard';
 import { DIFFICULTY } from './types';
 
 const main = async (mainElement: HTMLElement) => {
@@ -12,10 +13,10 @@ const main = async (mainElement: HTMLElement) => {
     const piecesContainer = document.createElement('div');
     piecesContainer.id = 'pieces';
 
-    const board = new Board.InteractiveBoard(boardContainer, tileContainer, piecesContainer);
+    const board = new InteractiveBoard(boardContainer, tileContainer, piecesContainer);
     board.loadFen('4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP');
     //test positing:board.loadFen('4PPPP/5PPP/6PP/7P/1p/pp/ppp/pppp');
-    Board.renderBoard(board, boardContainer);
+    renderBoard(board, boardContainer);
 
     const easyButton = document.getElementById('easy') as HTMLButtonElement;
     const mediumButton = document.getElementById('medium') as HTMLButtonElement;
