@@ -1,10 +1,20 @@
-import { Board, Piece, Player, PIECE_BLACK, PIECE_WHITE } from './board';
+import { Board, Piece, Player, PIECE_BLACK, PIECE_WHITE, DIFFICULTY } from './board';
 import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
 
-export const findMove = (board: Board, aiColor: Player, ez: boolean): Move | undefined => {
+export const findMove = (
+    board: Board,
+    aiColor: Player,
+    difficulty: DIFFICULTY
+): Move | undefined => {
     if (countPlayerScore(aiColor, board) === 980) {
         return undefined;
     }
+
+    const moveDepthSearch: number = {
+        easy: 0,
+        medium: 1,
+        hard: 2,
+    }[difficulty];
 
     const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
     let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
@@ -20,7 +30,7 @@ export const findMove = (board: Board, aiColor: Player, ez: boolean): Move | und
         // we just made a move, so now its time to evaluate from the perspective of the opponent
 
         const opponentScore = recursiveBoardSearchAlphaBeta(
-            ez ? 1 : 2,
+            moveDepthSearch,
             board,
             aiColor === PIECE_WHITE ? PIECE_BLACK : PIECE_WHITE,
             -Infinity,
@@ -38,7 +48,7 @@ export const findMove = (board: Board, aiColor: Player, ez: boolean): Move | und
     }
 
     const endTime = Date.now();
-    console.log(`Took ${endTime - startTime}ms to evaluate positions`);
+    console.log(`Took ${endTime - startTime}ms to evaluate positions (difficulty=${difficulty})`);
     console.log(`Evaluated ${TIMES_TO_EVAL} position`);
     TIMES_TO_EVAL = 0;
 

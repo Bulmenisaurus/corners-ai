@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: content-box;
 }
 
 html,
@@ -17,23 +18,52 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-grow: 0.8;
+    flex-grow: 1;
+}
+
+#top-bar {
+    flex-basis: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 10px 20px;
+}
+
+#top-bar #difficulty-container {
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
+    width: min(100%, 414px);
+}
+
+#top-bar button {
+    display: block;
+    min-width: 112px;
+    border-radius: 0;
+    color: white;
+    background-color: hsl(205, 80%, 50%);
+    padding: 5px;
+    border: 0;
+    border-radius: 2px;
+    border: 2px solid transparent;
+}
+
+#top-bar button:hover {
+    background-color: hsl(205, 80%, 20%);
+}
+
+#top-bar button[data-selected='true'] {
+    border-color: black;
 }
 
 #description {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    flex-grow: 0.2;
-    overflow-y: scroll;
-    padding: 10px;
+    padding: 20px;
 }
 
 #board-container {
-    /* :( */
-    --parent-height: calc(100vh * 0.8);
-    --parent-width: 100vw;
-    --parent-min: min(var(--parent-height), var(--parent-width));
-    width: var(--parent-min);
-    height: var(--parent-min);
+    aspect-ratio: 1/1;
+    height: 100%;
+    /*!!!!TODO VERY IMPORTANT: when width of main < height of main, this overflows past screen*/
     position: relative;
 }
 
@@ -62,7 +92,6 @@ main {
     width: 100%;
     height: 100%;
     aspect-ratio: 1/1;
-    transition: transform 1s;
 }
 
 #board-container .tile.black {
