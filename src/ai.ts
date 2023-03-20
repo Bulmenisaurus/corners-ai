@@ -21,7 +21,7 @@ export const findMove = (
     let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
     myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
 
-    let bestMove: Move = myPiecesMoves[0];
+    let bestMoves: Move[] = [];
     let bestMoveScore = -Infinity;
 
     const startTime = Date.now();
@@ -44,7 +44,9 @@ export const findMove = (
 
         if (ourScore > bestMoveScore) {
             bestMoveScore = ourScore;
-            bestMove = move;
+            bestMoves = [move];
+        } else if (ourScore === bestMoveScore) {
+            bestMoves.push(move);
         }
     }
 
@@ -53,7 +55,8 @@ export const findMove = (
     console.log(`Evaluated ${TIMES_TO_EVAL} position`);
     TIMES_TO_EVAL = 0;
 
-    return bestMove;
+    console.log(`Choosing one of ${bestMoves.length} options`);
+    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 };
 
 /**
