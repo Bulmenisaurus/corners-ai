@@ -1,5 +1,6 @@
-import { Board, Piece, Player, PIECE_BLACK, PIECE_WHITE, DIFFICULTY } from './board';
+import { Board } from './board';
 import { Move, generateAllMovesFromTile, generateAllMoves } from './moves';
+import { DIFFICULTY, Piece, PIECE_BLACK, PIECE_WHITE, Player } from './types';
 
 export const findMove = (
     board: Board,

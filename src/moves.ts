@@ -1,4 +1,5 @@
-import { Board, Piece, PIECE_NONE } from './board';
+import { Board } from './board';
+import { Piece, PIECE_NONE } from './types';
 
 export interface Move {
     fromX: number;

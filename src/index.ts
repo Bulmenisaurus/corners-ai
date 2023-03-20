@@ -1,5 +1,5 @@
 import * as Board from './board';
-import { DIFFICULTY } from './board';
+import { DIFFICULTY } from './types';
 
 const main = async (mainElement: HTMLElement) => {
     const boardContainer = document.createElement('div');
