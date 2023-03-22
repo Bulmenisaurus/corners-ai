@@ -31,20 +31,20 @@ main {
 #top-bar #difficulty-container {
     display: flex;
     justify-content: space-between;
+    gap: 5px;
     height: 100%;
     width: min(100%, 414px);
 }
 
 #top-bar button {
     display: block;
-    min-width: 112px;
-    border-radius: 0;
+    flex-basis: 112px;
     color: white;
     background-color: hsl(205, 80%, 50%);
     padding: 5px;
-    border: 0;
     border-radius: 2px;
     border: 4px solid transparent;
+    flex-shrink: 1;
 }
 
 #top-bar button:hover {
