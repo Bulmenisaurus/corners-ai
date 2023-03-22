@@ -44,21 +44,11 @@ const main = async (mainElement: HTMLElement) => {
         localStorage.setItem('difficulty', 'hard');
     };
 
-    const difficultyButtons: Record<DIFFICULTY, HTMLButtonElement> = {
-        easy: easyButton,
-        medium: mediumButton,
-        hard: hardButton,
-    };
+    board.difficulty = (localStorage.getItem('difficulty') as DIFFICULTY) || board.difficulty;
 
-    const storedDifficulty = localStorage.getItem('difficulty');
-    if (
-        storedDifficulty === 'easy' ||
-        storedDifficulty === 'medium' ||
-        storedDifficulty === 'hard'
-    ) {
-        board.difficulty = storedDifficulty;
-        difficultyButtons[storedDifficulty].dataset.selected = 'true';
-    }
+    if (board.difficulty === 'easy') easyButton.dataset.selected = 'true';
+    if (board.difficulty === 'medium') mediumButton.dataset.selected = 'true';
+    if (board.difficulty === 'hard') hardButton.dataset.selected = 'true';
 };
 
 window.addEventListener('load', () => {
