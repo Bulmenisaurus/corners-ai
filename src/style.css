@@ -63,7 +63,7 @@ main {
 #board-container {
     aspect-ratio: 1/1;
     height: 100%;
-    /*!!!!TODO VERY IMPORTANT: when width of main < height of main, this overflows past screen*/
+    max-height: 100vw;
     position: relative;
 }
 
