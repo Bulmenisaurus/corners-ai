@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Test</title>
+        <style>
+            body {
+                padding: 20px;
+            }
+            #container {
+                width: 400px;
+                height: 400px;
+                background-color: red;
+                position: relative;
+            }
+
+            #item {
+                background-color: blue;
+                position: absolute;
+                width: 50px;
+                height: 50px;
+                transition: 500ms;
+                top: 0%;
+                left: 0%;
+            }
+        </style>
+        <script>
+            window.addEventListener('load', () => {
+                document.getElementById('start').addEventListener('click', () => {
+                    const positions = [
+                        ['10%', '20%'],
+                        ['80%', '0%'],
+                        ['40%', '70%'],
+                        ['60%', '50%'],
+                    ];
+                    const item = document.getElementById('item');
+                    for (let i = 0; i < positions.length; i++) {
+                        window.setTimeout(() => {
+                            item.style.top = positions[i][0];
+                            item.style.left = positions[i][1];
+                        }, i * 500);
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <button id="start">Start Animation</button>
+        <div id="container">
+            <div id="item"></div>
+        </div>
+    </body>
+</html>
