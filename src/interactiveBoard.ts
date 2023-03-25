@@ -99,8 +99,8 @@ export class InteractiveBoard {
             pieceElement.dataset.pieceType = piece;
             pieceElement.dataset.x = x.toString();
             pieceElement.dataset.y = y.toString();
-            pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8 - 10px) * 0.10)`;
-            pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8 - 10px) * 0.10)`;
+            pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8) * 0.10)`;
+            pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8) * 0.10)`;
             this.piecesElement.appendChild(pieceElement);
         }
         {
