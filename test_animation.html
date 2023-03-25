@@ -12,7 +12,7 @@
             #container {
                 width: 400px;
                 height: 400px;
-                background-color: red;
+                background-color: green;
                 position: relative;
             }
 
@@ -38,8 +38,8 @@
                     const item = document.getElementById('item');
                     for (let i = 0; i < positions.length; i++) {
                         window.setTimeout(() => {
-                            item.style.top = positions[i][0];
-                            item.style.left = positions[i][1];
+                            item.style.top = `calc(${positions[i][0]} - 1px)`;
+                            item.style.left = `calc(${positions[i][1]} - 1px)`;
                         }, i * 500);
                     }
                 });
