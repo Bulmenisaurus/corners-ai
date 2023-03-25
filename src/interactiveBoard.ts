@@ -122,8 +122,8 @@ export class InteractiveBoard {
         for (let i = 1; i < move.fullMovePath.length; i++) {
             const [x, y] = move.fullMovePath[i];
             window.setTimeout(() => {
-                pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8 - 10px) * 0.10)`;
-                pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8 - 10px) * 0.10)`;
+                pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8) * 0.10)`;
+                pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8) * 0.10)`;
             }, pieceAnimationTimeMS * (i - 1));
         }
 
