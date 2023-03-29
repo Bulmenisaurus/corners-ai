@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>debug</title>
+    </head>
+    <body>
+        <textarea id="board" cols="30" rows="10"></textarea>
+        <canvas id="draw" width="80" height="80" style="border: 1px solid"></canvas>
+        <script>
+            board.addEventListener('input', (e) => {
+                const v = JSON.parse(board.value);
+                const ctx = draw.getContext('2d');
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        const i = x + y * 8;
+                        if (v[i] === 'black') {
+                            ctx.fillStyle = 'black';
+                        } else if (v[i] === 'white') {
+                            ctx.fillStyle = 'white';
+                        } else {
+                            ctx.fillStyle = 'brown';
+                        }
+                        ctx.fillRect(10 * x, 10 * y, 10, 10);
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>
