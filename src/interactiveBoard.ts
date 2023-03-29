@@ -116,21 +116,18 @@ export class InteractiveBoard {
         pieceElement.dataset.x = toX.toString();
         pieceElement.dataset.y = toY.toString();
 
-        const pieceAnimationTimeMS = Math.min(1000 / (move.fullMovePath.length - 1), 500);
-        pieceElement.style.transitionDuration = `${pieceAnimationTimeMS}ms`;
-
         for (let i = 1; i < move.fullMovePath.length; i++) {
             const [x, y] = move.fullMovePath[i];
             window.setTimeout(() => {
                 pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8) * 0.10)`;
                 pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8) * 0.10)`;
-            }, pieceAnimationTimeMS * (i - 1));
+            }, 500 * (i - 1));
         }
 
         pieceElement.style.zIndex = '1';
         window.setTimeout(() => {
             pieceElement.style.zIndex = '';
-        }, pieceAnimationTimeMS * move.fullMovePath.length);
+        }, 500 * move.fullMovePath.length);
     }
 
     select(x: number, y: number) {
