@@ -28,19 +28,28 @@ export const findMove = (
 
     for (const move of myPiecesMoves) {
         board.doMove(move);
-        // we just made a move, so now its time to evaluate from the perspective of the opponent
 
-        const opponentScore = recursiveBoardSearchAlphaBeta(
-            moveDepthSearch,
-            board,
-            aiColor === 'white' ? 'black' : 'white',
-            -Infinity,
-            Infinity
-        );
+        let ourScore = 0;
+
+        // if our moves resulted in a finish, interrupt search immediately
+        const playerFinished = countPlayerScore(aiColor, board) === 980;
+        if (playerFinished) {
+            ourScore = evaluate(board, aiColor);
+        } else {
+            // we just made a move, so now its time to evaluate from the perspective of the opponent
+
+            const opponentScore = recursiveBoardSearchAlphaBeta(
+                moveDepthSearch,
+                board,
+                aiColor === 'white' ? 'black' : 'white',
+                -Infinity,
+                Infinity
+            );
+
+            ourScore = -opponentScore;
+        }
 
         board.undoMove(move);
-
-        const ourScore = -opponentScore;
 
         if (ourScore > bestMoveScore) {
             bestMoveScore = ourScore;

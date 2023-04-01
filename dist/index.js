@@ -1,1 +1,453 @@
-"use strict";(()=>{var M=(i,e)=>()=>(i&&(e=i(i=0)),e);var I=(i,e)=>()=>(e||i((e={exports:{}}).exports,e),e.exports);var E=(i,e,t)=>new Promise((n,o)=>{var r=a=>{try{s(t.next(a))}catch(c){o(c)}},l=a=>{try{s(t.throw(a))}catch(c){o(c)}},s=a=>a.done?n(a.value):Promise.resolve(a.value).then(r,l);s((t=t.apply(i,e)).next())});var m,T,v=M(()=>{"use strict";m=class{constructor(e){this.pieces=e}getPiece(e,t){return this.pieces[e+t*8]}setPiece(e,t,n){this.pieces[e+t*8]=n}getTileColor(e,t){return["white","black"][(e+t)%2]}coordinates(){let e=[];for(let t=0;t<8;t++)for(let n=0;n<8;n++)e.push([n,t]);return e}doMove(e){let t=this.getPiece(e.fromX,e.fromY);this.setPiece(e.fromX,e.fromY,"none"),this.setPiece(e.toX,e.toY,t)}undoMove(e){let t=this.getPiece(e.toX,e.toY);this.setPiece(e.fromX,e.fromY,t),this.setPiece(e.toX,e.toY,"none")}},T=(i,e)=>{e.append(i.tilesElement,i.piecesElement)}});var S,b,p,g,y=M(()=>{"use strict";S=i=>{let e=o=>`${o.fromX},${o.fromY},${o.toX},${o.toY}`,t={};for(let o of i){let r=e(o);r in t?t[r].push(o):t[r]=[o]}let n=[];for(let o in t){let r=t[o].sort((l,s)=>l.fullMovePath.length-s.fullMovePath.length);n.push(r[0])}return n},b=(i,e,t)=>{let n=g(i,e,t,{fromX:i,fromY:e,toX:-1,toY:-1,fullMovePath:[[i,e]]},!1);return S(n)},p=i=>({fromX:i.fromX,fromY:i.fromY,fullMovePath:[...i.fullMovePath],toX:i.toX,toY:i.toY}),g=(i,e,t,n,o)=>{let r=[],l=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];for(let[s,a]of l){if(o)continue;let c=i+s,d=e+a;if(c>7||c<0||d>7||d<0||t.getPiece(c,d)!=="none")continue;let u=p(n);u.fullMovePath.push([c,d]),u.toX=c,u.toY=d,r.push(u)}for(let[s,a]of l){let c=i+s*2,d=e+a*2;if(c>7||c<0||d>7||d<0)continue;let u=i+s,k=e+a,L=t.getPiece(u,k)!="none",C=t.getPiece(c,d)=="none",X=n.fullMovePath.some(([h,A])=>h==c&&A==d);if(!L||!C||X)continue;let P=p(n);P.fullMovePath.push([c,d]);let B=g(c,d,t,P,!0);for(let h of B)r.push(h)}if(o){let s=p(n);s.toX=i,s.toY=e,r.push(s)}return r}});var f,w=M(()=>{"use strict";v();y();f=class{constructor(e,t,n){this.board=new m(Array(8*8).fill("none")),this.currentTurn="white",this.aiWorker=new Worker("./dist/worker.js"),this.boardElement=e,this.tilesElement=t,this.piecesElement=n,this.difficulty="easy",this.selectedTileCoordinates=void 0,e.addEventListener("click",o=>{this.onClick(o)}),this.aiWorker.onmessage=o=>{this.receiveAiMove(o.data)},this._initializeTileElements()}_initializeTileElements(){let e=this.board.coordinates().map(([t,n])=>{let o=document.createElement("div");return o.classList.add("tile"),o.classList.add(this.getTileColor(t,n)),o.dataset.selected="false",o});this.tilesElement.append(...e)}loadFen(e){let t=e.split("/"),n=0,o=0;for(let r of t){for(let l of r)l==="P"?(this.setPiece(n,o,"white"),n++):l==="p"?(this.setPiece(n,o,"black"),n++):n+=parseInt(l);n=0,o+=1}}getTileElement(e,t){return Array.from(this.tilesElement.children)[e+t*8]}getPieceElement(e,t){return Array.from(this.piecesElement.children).find(r=>r.dataset.x===e.toString()&&r.dataset.y===t.toString())}setPiece(e,t,n){if(this.board.getPiece(e,t)==="none"){this.board.setPiece(e,t,n);let o=document.createElement("div");o.classList.add("piece"),o.dataset.pieceType=n,o.dataset.x=e.toString(),o.dataset.y=t.toString(),o.style.top=`calc(100%/8 * ${t} + (100%/8) * 0.10)`,o.style.left=`calc(100%/8 * ${e} + (100%/8) * 0.10)`,this.piecesElement.appendChild(o)}{let o=this.getPieceElement(e,t);o.dataset.pieceType=n}}uiAnimateMove(e){let{fromX:t,fromY:n,toX:o,toY:r}=e,l=this.getPieceElement(t,n);l.dataset.x=o.toString(),l.dataset.y=r.toString();for(let s=1;s<e.fullMovePath.length;s++){let[a,c]=e.fullMovePath[s];window.setTimeout(()=>{l.style.top=`calc(100%/8 * ${c} + (100%/8) * 0.10)`,l.style.left=`calc(100%/8 * ${a} + (100%/8) * 0.10)`},500*(s-1))}l.style.zIndex="1",window.setTimeout(()=>{l.style.zIndex=""},500*e.fullMovePath.length)}select(e,t){let n=this.getTileElement(e,t);n.dataset.selected="true"}unselect(e,t){let n=this.getTileElement(e,t);n.dataset.selected="false"}getTileColor(e,t){return this.board.getTileColor(e,t)}addSuggestions(e,t){let n=b(e,t,this.board);for(let o of n)this.getTileElement(o.toX,o.toY).classList.add("valid")}clearSuggestions(){Array.from(document.querySelectorAll(".valid")).map(e=>e.classList.remove("valid"))}onClick(e){let t=e.offsetX,n=e.offsetY,o=t/this.boardElement.getBoundingClientRect().width,r=n/this.boardElement.getBoundingClientRect().height,l=Math.floor(o*8),s=Math.floor(r*8);this.onTileClick(l,s)}onTileClick(e,t){let n=this.selectedTileCoordinates;if(n!==void 0)this.unselect(n[0],n[1]),this.selectedTileCoordinates=void 0,this.tryMove(n[0],n[1],e,t);else{if(this.board.getPiece(e,t)==="none")return;this.selectedTileCoordinates=[e,t],this.select(e,t)}}removeMarks(){Array.from(document.querySelectorAll(".mark")).map(e=>e.classList.remove("mark"))}markMove(e){e.fullMovePath.forEach(([t,n])=>{this.getTileElement(t,n).classList.add("mark")})}initiateAiMove(){this.aiWorker.postMessage([this.board.pieces,this.currentTurn,this.difficulty])}receiveAiMove(e){this.currentTurn=this.currentTurn==="black"?"white":"black",e===void 0?console.warn("AI has no response, probably end of game?"):(this.doMove(e),this.markMove(e))}doMove(e){this.board.setPiece(e.toX,e.toY,this.board.getPiece(e.fromX,e.fromY)),this.board.setPiece(e.fromX,e.fromY,"none"),this.uiAnimateMove(e),this.removeMarks()}undoMove(e){let t=this.board.getPiece(e.toX,e.toY);this.setPiece(e.fromX,e.fromY,t),this.setPiece(e.toX,e.toY,"none")}tryMove(e,t,n,o){if(this.board.getPiece(e,t)!==this.currentTurn||e===n&&t==o)return;let l=b(e,t,this.board).find(s=>s.toX===n&&s.toY===o);if(l===void 0){new Audio("./audio/wood-sound-error.mp3").play();return}this.doMove(l),this.currentTurn=this.currentTurn==="black"?"white":"black",window.setTimeout(()=>{this.initiateAiMove()},1e3)}}});var F=I(Y=>{v();w();var H=i=>E(Y,null,function*(){let e=document.createElement("div");e.id="board-container",i.appendChild(e);let t=document.createElement("div");t.id="tiles";let n=document.createElement("div");n.id="pieces";let o=new f(e,t,n);o.loadFen("4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP"),T(o,e);let r=document.getElementById("easy"),l=document.getElementById("medium"),s=document.getElementById("hard");r.onclick=()=>{r.dataset.selected="true",l.dataset.selected=s.dataset.selected="false",o.difficulty="easy",localStorage.setItem("difficulty","easy")},l.onclick=()=>{l.dataset.selected="true",r.dataset.selected=s.dataset.selected="false",o.difficulty="medium",localStorage.setItem("difficulty","medium")},s.onclick=()=>{s.dataset.selected="true",r.dataset.selected=l.dataset.selected="false",o.difficulty="hard",localStorage.setItem("difficulty","hard")},o.difficulty=localStorage.getItem("difficulty")||o.difficulty,o.difficulty==="easy"&&(r.dataset.selected="true"),o.difficulty==="medium"&&(l.dataset.selected="true"),o.difficulty==="hard"&&(s.dataset.selected="true")});window.addEventListener("load",()=>{let i=document.getElementsByTagName("main")[0];H(i)})});F();})();
+"use strict";
+(() => {
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __esm = (fn, res) => function __init() {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  };
+  var __commonJS = (cb, mod) => function __require() {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __async = (__this, __arguments, generator) => {
+    return new Promise((resolve, reject) => {
+      var fulfilled = (value) => {
+        try {
+          step(generator.next(value));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      var rejected = (value) => {
+        try {
+          step(generator.throw(value));
+        } catch (e) {
+          reject(e);
+        }
+      };
+      var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+      step((generator = generator.apply(__this, __arguments)).next());
+    });
+  };
+
+  // src/board.ts
+  var Board, renderBoard;
+  var init_board = __esm({
+    "src/board.ts"() {
+      "use strict";
+      Board = class {
+        constructor(board) {
+          this.pieces = board;
+        }
+        getPiece(x, y) {
+          return this.pieces[x + y * 8];
+        }
+        setPiece(x, y, piece) {
+          this.pieces[x + y * 8] = piece;
+        }
+        getTileColor(x, y) {
+          return ["white", "black"][(x + y) % 2];
+        }
+        coordinates() {
+          const coordinates = [];
+          for (let y = 0; y < 8; y++) {
+            for (let x = 0; x < 8; x++) {
+              coordinates.push([x, y]);
+            }
+          }
+          return coordinates;
+        }
+        doMove(move) {
+          const pieceToMove = this.getPiece(move.fromX, move.fromY);
+          this.setPiece(move.fromX, move.fromY, "none");
+          this.setPiece(move.toX, move.toY, pieceToMove);
+        }
+        undoMove(move) {
+          const pieceToMove = this.getPiece(move.toX, move.toY);
+          this.setPiece(move.fromX, move.fromY, pieceToMove);
+          this.setPiece(move.toX, move.toY, "none");
+        }
+      };
+      renderBoard = (board, boardContainer) => {
+        boardContainer.append(board.tilesElement, board.piecesElement);
+      };
+    }
+  });
+
+  // src/moves.ts
+  var deduplicateMovesByStartEnd, generateAllMovesFromTile, cloneMove, recursiveSearchMoves;
+  var init_moves = __esm({
+    "src/moves.ts"() {
+      "use strict";
+      deduplicateMovesByStartEnd = (moves) => {
+        const getMoveKey = (move) => {
+          return `${move.fromX},${move.fromY},${move.toX},${move.toY}`;
+        };
+        const moveBuckets = {};
+        for (const move of moves) {
+          const moveKey = getMoveKey(move);
+          if (moveKey in moveBuckets) {
+            moveBuckets[moveKey].push(move);
+          } else {
+            moveBuckets[moveKey] = [move];
+          }
+        }
+        const dedupMoves = [];
+        for (const moveKey in moveBuckets) {
+          const moveKeyMoves = moveBuckets[moveKey].sort(
+            (move1, move2) => move1.fullMovePath.length - move2.fullMovePath.length
+          );
+          dedupMoves.push(moveKeyMoves[0]);
+        }
+        return dedupMoves;
+      };
+      generateAllMovesFromTile = (pieceX, pieceY, board) => {
+        const moves = recursiveSearchMoves(
+          pieceX,
+          pieceY,
+          board,
+          {
+            fromX: pieceX,
+            fromY: pieceY,
+            toX: -1,
+            toY: -1,
+            fullMovePath: [[pieceX, pieceY]]
+          },
+          false
+        );
+        return deduplicateMovesByStartEnd(moves);
+      };
+      cloneMove = (move) => {
+        return {
+          fromX: move.fromX,
+          fromY: move.fromY,
+          fullMovePath: [...move.fullMovePath],
+          toX: move.toX,
+          toY: move.toY
+        };
+      };
+      recursiveSearchMoves = (pieceX, pieceY, board, currentMoveData, hasJumped) => {
+        const validMoves = [];
+        const tileOffsets = [
+          [0, 1],
+          //   N
+          [1, 1],
+          //   NE
+          [1, 0],
+          //   E
+          [1, -1],
+          //  SE
+          [0, -1],
+          //  S
+          [-1, -1],
+          // SW
+          [-1, 0],
+          //  W
+          [-1, 1]
+          //  NW
+        ];
+        for (const [offsetX, offsetY] of tileOffsets) {
+          if (hasJumped) {
+            continue;
+          }
+          const newX = pieceX + offsetX;
+          const newY = pieceY + offsetY;
+          if (newX > 7 || newX < 0 || newY > 7 || newY < 0) {
+            continue;
+          }
+          if (board.getPiece(newX, newY) !== "none") {
+            continue;
+          }
+          const newMove = cloneMove(currentMoveData);
+          newMove.fullMovePath.push([newX, newY]);
+          newMove.toX = newX;
+          newMove.toY = newY;
+          validMoves.push(newMove);
+        }
+        for (const [offsetX, offsetY] of tileOffsets) {
+          const newX = pieceX + offsetX * 2;
+          const newY = pieceY + offsetY * 2;
+          if (newX > 7 || newX < 0 || newY > 7 || newY < 0) {
+            continue;
+          }
+          const jumpX = pieceX + offsetX;
+          const jumpY = pieceY + offsetY;
+          const isSomeoneToJumpOver = board.getPiece(jumpX, jumpY) != "none";
+          const isSomewhereToLand = board.getPiece(newX, newY) == "none";
+          const hasBeenHereBefore = currentMoveData.fullMovePath.some(([moveX, moveY]) => {
+            return moveX == newX && moveY == newY;
+          });
+          if (!isSomeoneToJumpOver || !isSomewhereToLand || hasBeenHereBefore) {
+            continue;
+          }
+          const newMove = cloneMove(currentMoveData);
+          newMove.fullMovePath.push([newX, newY]);
+          const deeperMoves = recursiveSearchMoves(newX, newY, board, newMove, true);
+          for (const move of deeperMoves) {
+            validMoves.push(move);
+          }
+        }
+        if (hasJumped) {
+          const newMove = cloneMove(currentMoveData);
+          newMove.toX = pieceX;
+          newMove.toY = pieceY;
+          validMoves.push(newMove);
+        }
+        return validMoves;
+      };
+    }
+  });
+
+  // src/interactiveBoard.ts
+  var InteractiveBoard;
+  var init_interactiveBoard = __esm({
+    "src/interactiveBoard.ts"() {
+      "use strict";
+      init_board();
+      init_moves();
+      InteractiveBoard = class {
+        constructor(boardElement, tileContainer, piecesContainer) {
+          this.board = new Board(Array(8 * 8).fill("none"));
+          this.currentTurn = "white";
+          this.aiWorker = new Worker("./dist/worker.js");
+          this.boardElement = boardElement;
+          this.tilesElement = tileContainer;
+          this.piecesElement = piecesContainer;
+          this.difficulty = "easy";
+          this.selectedTileCoordinates = void 0;
+          boardElement.addEventListener("click", (ev) => {
+            this.onClick(ev);
+          });
+          this.aiWorker.onmessage = (e) => {
+            this.receiveAiMove(e.data);
+          };
+          this._initializeTileElements();
+        }
+        _initializeTileElements() {
+          const tileContainers = this.board.coordinates().map(([x, y]) => {
+            const tileContainer = document.createElement("div");
+            tileContainer.classList.add("tile");
+            tileContainer.classList.add(this.getTileColor(x, y));
+            tileContainer.dataset.selected = "false";
+            return tileContainer;
+          });
+          this.tilesElement.append(...tileContainers);
+        }
+        loadFen(fen) {
+          const rows = fen.split("/");
+          let currentX = 0;
+          let currentY = 0;
+          for (const row of rows) {
+            for (const char of row) {
+              if (char === "P") {
+                this.setPiece(currentX, currentY, "white");
+                currentX++;
+              } else if (char === "p") {
+                this.setPiece(currentX, currentY, "black");
+                currentX++;
+              } else {
+                currentX += parseInt(char);
+              }
+            }
+            currentX = 0;
+            currentY += 1;
+          }
+        }
+        getTileElement(x, y) {
+          const tileElements = Array.from(this.tilesElement.children);
+          return tileElements[x + y * 8];
+        }
+        getPieceElement(x, y) {
+          const allPieces = Array.from(this.piecesElement.children);
+          const pieceElement = allPieces.find(
+            (piece) => piece.dataset.x === x.toString() && piece.dataset.y === y.toString()
+          );
+          return pieceElement;
+        }
+        setPiece(x, y, piece) {
+          if (this.board.getPiece(x, y) === "none") {
+            this.board.setPiece(x, y, piece);
+            const pieceElement = document.createElement("div");
+            pieceElement.classList.add("piece");
+            pieceElement.dataset.pieceType = piece;
+            pieceElement.dataset.x = x.toString();
+            pieceElement.dataset.y = y.toString();
+            pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8) * 0.10)`;
+            pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8) * 0.10)`;
+            this.piecesElement.appendChild(pieceElement);
+          }
+          {
+            const pieceElement = this.getPieceElement(x, y);
+            pieceElement.dataset.pieceType = piece;
+          }
+        }
+        uiAnimateMove(move) {
+          const { fromX, fromY, toX, toY } = move;
+          const pieceElement = this.getPieceElement(fromX, fromY);
+          pieceElement.dataset.x = toX.toString();
+          pieceElement.dataset.y = toY.toString();
+          for (let i = 1; i < move.fullMovePath.length; i++) {
+            const [x, y] = move.fullMovePath[i];
+            window.setTimeout(() => {
+              pieceElement.style.top = `calc(100%/8 * ${y} + (100%/8) * 0.10)`;
+              pieceElement.style.left = `calc(100%/8 * ${x} + (100%/8) * 0.10)`;
+            }, 500 * (i - 1));
+          }
+          pieceElement.style.zIndex = "1";
+          window.setTimeout(() => {
+            pieceElement.style.zIndex = "";
+          }, 500 * move.fullMovePath.length);
+        }
+        select(x, y) {
+          const tileElement = this.getTileElement(x, y);
+          tileElement.dataset.selected = "true";
+        }
+        unselect(x, y) {
+          const tileElement = this.getTileElement(x, y);
+          tileElement.dataset.selected = "false";
+        }
+        getTileColor(x, y) {
+          return this.board.getTileColor(x, y);
+        }
+        addSuggestions(x, y) {
+          const allValidMoves = generateAllMovesFromTile(x, y, this.board);
+          for (const validMove of allValidMoves) {
+            const tileElement = this.getTileElement(validMove.toX, validMove.toY);
+            tileElement.classList.add("valid");
+          }
+        }
+        clearSuggestions() {
+          Array.from(document.querySelectorAll(".valid")).map((v) => v.classList.remove("valid"));
+        }
+        onClick(event) {
+          const mouseX = event.offsetX;
+          const mouseY = event.offsetY;
+          const boardFractionX = mouseX / this.boardElement.getBoundingClientRect().width;
+          const boardFractionY = mouseY / this.boardElement.getBoundingClientRect().height;
+          const boardTileX = Math.floor(boardFractionX * 8);
+          const boardTileY = Math.floor(boardFractionY * 8);
+          this.onTileClick(boardTileX, boardTileY);
+        }
+        onTileClick(tileX, tileY) {
+          const prevSelectedCoords = this.selectedTileCoordinates;
+          if (prevSelectedCoords !== void 0) {
+            this.unselect(prevSelectedCoords[0], prevSelectedCoords[1]);
+            this.selectedTileCoordinates = void 0;
+            this.tryMove(prevSelectedCoords[0], prevSelectedCoords[1], tileX, tileY);
+          } else {
+            if (this.board.getPiece(tileX, tileY) === "none") {
+              return;
+            }
+            this.selectedTileCoordinates = [tileX, tileY];
+            this.select(tileX, tileY);
+          }
+        }
+        removeMarks() {
+          Array.from(document.querySelectorAll(".mark")).map((v) => v.classList.remove("mark"));
+        }
+        markMove(move) {
+          move.fullMovePath.forEach(([x, y]) => {
+            const tile = this.getTileElement(x, y);
+            tile.classList.add("mark");
+          });
+        }
+        initiateAiMove() {
+          this.aiWorker.postMessage([this.board.pieces, this.currentTurn, this.difficulty]);
+        }
+        receiveAiMove(move) {
+          this.currentTurn = this.currentTurn === "black" ? "white" : "black";
+          if (move === void 0) {
+            console.warn("AI has no response, probably end of game?");
+          } else {
+            this.doMove(move);
+            this.markMove(move);
+          }
+        }
+        doMove(move) {
+          this.board.setPiece(move.toX, move.toY, this.board.getPiece(move.fromX, move.fromY));
+          this.board.setPiece(move.fromX, move.fromY, "none");
+          this.uiAnimateMove(move);
+          this.removeMarks();
+        }
+        undoMove(move) {
+          const pieceToMove = this.board.getPiece(move.toX, move.toY);
+          this.setPiece(move.fromX, move.fromY, pieceToMove);
+          this.setPiece(move.toX, move.toY, "none");
+        }
+        tryMove(startX, startY, endX, endY) {
+          if (this.board.getPiece(startX, startY) !== this.currentTurn) {
+            return;
+          }
+          if (startX === endX && startY == endY) {
+            return;
+          }
+          const allValidMoves = generateAllMovesFromTile(startX, startY, this.board);
+          const thisMove = allValidMoves.find((move) => {
+            return move.toX === endX && move.toY === endY;
+          });
+          if (thisMove === void 0) {
+            const errorAudio = new Audio("./audio/wood-sound-error.mp3");
+            errorAudio.play();
+            return;
+          }
+          this.doMove(thisMove);
+          this.currentTurn = this.currentTurn === "black" ? "white" : "black";
+          window.setTimeout(() => {
+            this.initiateAiMove();
+          }, 1e3);
+        }
+      };
+    }
+  });
+
+  // src/index.ts
+  var require_src = __commonJS({
+    "src/index.ts"(exports) {
+      init_board();
+      init_interactiveBoard();
+      var main = (mainElement) => __async(exports, null, function* () {
+        const boardContainer = document.createElement("div");
+        boardContainer.id = "board-container";
+        mainElement.appendChild(boardContainer);
+        const tileContainer = document.createElement("div");
+        tileContainer.id = "tiles";
+        const piecesContainer = document.createElement("div");
+        piecesContainer.id = "pieces";
+        const board = new InteractiveBoard(boardContainer, tileContainer, piecesContainer);
+        board.loadFen("4pppp/5ppp/6pp/7p/P/PP/PPP/PPPP");
+        renderBoard(board, boardContainer);
+        const easyButton = document.getElementById("easy");
+        const mediumButton = document.getElementById("medium");
+        const hardButton = document.getElementById("hard");
+        easyButton.onclick = () => {
+          easyButton.dataset.selected = "true";
+          mediumButton.dataset.selected = hardButton.dataset.selected = "false";
+          board.difficulty = "easy";
+          localStorage.setItem("difficulty", "easy");
+        };
+        mediumButton.onclick = () => {
+          mediumButton.dataset.selected = "true";
+          easyButton.dataset.selected = hardButton.dataset.selected = "false";
+          board.difficulty = "medium";
+          localStorage.setItem("difficulty", "medium");
+        };
+        hardButton.onclick = () => {
+          hardButton.dataset.selected = "true";
+          easyButton.dataset.selected = mediumButton.dataset.selected = "false";
+          board.difficulty = "hard";
+          localStorage.setItem("difficulty", "hard");
+        };
+        board.difficulty = localStorage.getItem("difficulty") || board.difficulty;
+        if (board.difficulty === "easy")
+          easyButton.dataset.selected = "true";
+        if (board.difficulty === "medium")
+          mediumButton.dataset.selected = "true";
+        if (board.difficulty === "hard")
+          hardButton.dataset.selected = "true";
+      });
+      window.addEventListener("load", () => {
+        const mainElement = document.getElementsByTagName("main")[0];
+        main(mainElement);
+      });
+    }
+  });
+  require_src();
+})();

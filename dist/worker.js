@@ -1,1 +1,278 @@
-"use strict";(()=>{var x=o=>{let e=s=>`${s.fromX},${s.fromY},${s.toX},${s.toY}`,t={};for(let s of o){let r=e(s);r in t?t[r].push(s):t[r]=[s]}let n=[];for(let s in t){let r=t[s].sort((f,u)=>f.fullMovePath.length-u.fullMovePath.length);n.push(r[0])}return n},p=(o,e,t)=>{let n=Y(o,e,t,{fromX:o,fromY:e,toX:-1,toY:-1,fullMovePath:[[o,e]]},!1);return x(n)},b=(o,e)=>{let t=[];for(let n of o.coordinates()){if(!(o.getPiece(n[0],n[1])===e))continue;p(n[0],n[1],o).forEach(f=>t.push(f))}return t},P=o=>({fromX:o.fromX,fromY:o.fromY,fullMovePath:[...o.fullMovePath],toX:o.toX,toY:o.toY}),Y=(o,e,t,n,s)=>{let r=[],f=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];for(let[u,m]of f){if(s)continue;let i=o+u,c=e+m;if(i>7||i<0||c>7||c<0||t.getPiece(i,c)!=="none")continue;let l=P(n);l.fullMovePath.push([i,c]),l.toX=i,l.toY=c,r.push(l)}for(let[u,m]of f){let i=o+u*2,c=e+m*2;if(i>7||i<0||c>7||c<0)continue;let l=o+u,a=e+m,B=t.getPiece(l,a)!="none",S=t.getPiece(i,c)=="none",T=n.fullMovePath.some(([h,I])=>h==i&&I==c);if(!B||!S||T)continue;let g=P(n);g.fullMovePath.push([i,c]);let k=Y(i,c,t,g,!0);for(let h of k)r.push(h)}if(s){let u=P(n);u.toX=o,u.toY=e,r.push(u)}return r};var X=(o,e,t)=>{if(v(e,o)===980)return;let n={easy:0,medium:1,hard:2}[t],r=o.coordinates().filter(([c,l])=>o.getPiece(c,l)===e).map(([c,l])=>p(c,l,o)).flat();r=D(r,e);let f=[],u=-1/0,m=Date.now();for(let c of r){o.doMove(c);let l=w(n,o,e==="white"?"black":"white",-1/0,1/0);o.undoMove(c);let a=-l;a>u?(u=a,f=[c]):a===u&&f.push(c)}let i=Date.now();return console.log(`Took ${i-m}ms to evaluate positions (difficulty=${t})`),console.log(`Evaluated ${d} position`),d=0,console.log(`Choosing one of ${f.length} options`),f[Math.floor(Math.random()*f.length)]},D=(o,e)=>o.sort((t,n)=>y(t,e)-y(n,e)).reverse(),d=0,y=(o,e)=>{d++;let t=e==="black"?0:7,n=e==="white"?7:0,s=Math.abs(o.fromX-t)+Math.abs(o.fromY-n),r=Math.abs(o.toX-t)+Math.abs(o.toY-n);return s-r},w=(o,e,t,n,s)=>{let r=v(t,e)===980;if(o===0||r)return E(e,t);let f=b(e,t);for(let u of f){e.doMove(u);let m=-w(o-1,e,t==="black"?"white":"black",-s,-n);if(e.undoMove(u),m>=s)return s;n=Math.max(n,m)}return n},E=(o,e)=>{let t=v("white",o),n=v("black",o);return(t-n)*(e==="white"?1:-1)},v=(o,e)=>{let t=o==="black"?0:7,n=o==="black"?7:0;return 1e3-e.coordinates().filter(([m,i])=>e.getPiece(m,i)===o).map(([m,i])=>Math.abs(m-t)+Math.abs(i-n)).reduce((m,i)=>m+i,0)};var M=class{constructor(e){this.pieces=e}getPiece(e,t){return this.pieces[e+t*8]}setPiece(e,t,n){this.pieces[e+t*8]=n}getTileColor(e,t){return["white","black"][(e+t)%2]}coordinates(){let e=[];for(let t=0;t<8;t++)for(let n=0;n<8;n++)e.push([n,t]);return e}doMove(e){let t=this.getPiece(e.fromX,e.fromY);this.setPiece(e.fromX,e.fromY,"none"),this.setPiece(e.toX,e.toY,t)}undoMove(e){let t=this.getPiece(e.toX,e.toY);this.setPiece(e.fromX,e.fromY,t),this.setPiece(e.toX,e.toY,"none")}};onmessage=o=>{let e=new M(o.data[0]),t=X(e,o.data[1],o.data[2]);postMessage(t)};})();
+"use strict";
+(() => {
+  // src/moves.ts
+  var deduplicateMovesByStartEnd = (moves) => {
+    const getMoveKey = (move) => {
+      return `${move.fromX},${move.fromY},${move.toX},${move.toY}`;
+    };
+    const moveBuckets = {};
+    for (const move of moves) {
+      const moveKey = getMoveKey(move);
+      if (moveKey in moveBuckets) {
+        moveBuckets[moveKey].push(move);
+      } else {
+        moveBuckets[moveKey] = [move];
+      }
+    }
+    const dedupMoves = [];
+    for (const moveKey in moveBuckets) {
+      const moveKeyMoves = moveBuckets[moveKey].sort(
+        (move1, move2) => move1.fullMovePath.length - move2.fullMovePath.length
+      );
+      dedupMoves.push(moveKeyMoves[0]);
+    }
+    return dedupMoves;
+  };
+  var generateAllMovesFromTile = (pieceX, pieceY, board) => {
+    const moves = recursiveSearchMoves(
+      pieceX,
+      pieceY,
+      board,
+      {
+        fromX: pieceX,
+        fromY: pieceY,
+        toX: -1,
+        toY: -1,
+        fullMovePath: [[pieceX, pieceY]]
+      },
+      false
+    );
+    return deduplicateMovesByStartEnd(moves);
+  };
+  var generateAllMoves = (board, pieceColor) => {
+    const moves = [];
+    for (const coordinate of board.coordinates()) {
+      const tileOurColor = board.getPiece(coordinate[0], coordinate[1]) === pieceColor;
+      if (!tileOurColor) {
+        continue;
+      }
+      const tileMoves = generateAllMovesFromTile(coordinate[0], coordinate[1], board);
+      tileMoves.forEach((m) => moves.push(m));
+    }
+    return moves;
+  };
+  var cloneMove = (move) => {
+    return {
+      fromX: move.fromX,
+      fromY: move.fromY,
+      fullMovePath: [...move.fullMovePath],
+      toX: move.toX,
+      toY: move.toY
+    };
+  };
+  var recursiveSearchMoves = (pieceX, pieceY, board, currentMoveData, hasJumped) => {
+    const validMoves = [];
+    const tileOffsets = [
+      [0, 1],
+      //   N
+      [1, 1],
+      //   NE
+      [1, 0],
+      //   E
+      [1, -1],
+      //  SE
+      [0, -1],
+      //  S
+      [-1, -1],
+      // SW
+      [-1, 0],
+      //  W
+      [-1, 1]
+      //  NW
+    ];
+    for (const [offsetX, offsetY] of tileOffsets) {
+      if (hasJumped) {
+        continue;
+      }
+      const newX = pieceX + offsetX;
+      const newY = pieceY + offsetY;
+      if (newX > 7 || newX < 0 || newY > 7 || newY < 0) {
+        continue;
+      }
+      if (board.getPiece(newX, newY) !== "none") {
+        continue;
+      }
+      const newMove = cloneMove(currentMoveData);
+      newMove.fullMovePath.push([newX, newY]);
+      newMove.toX = newX;
+      newMove.toY = newY;
+      validMoves.push(newMove);
+    }
+    for (const [offsetX, offsetY] of tileOffsets) {
+      const newX = pieceX + offsetX * 2;
+      const newY = pieceY + offsetY * 2;
+      if (newX > 7 || newX < 0 || newY > 7 || newY < 0) {
+        continue;
+      }
+      const jumpX = pieceX + offsetX;
+      const jumpY = pieceY + offsetY;
+      const isSomeoneToJumpOver = board.getPiece(jumpX, jumpY) != "none";
+      const isSomewhereToLand = board.getPiece(newX, newY) == "none";
+      const hasBeenHereBefore = currentMoveData.fullMovePath.some(([moveX, moveY]) => {
+        return moveX == newX && moveY == newY;
+      });
+      if (!isSomeoneToJumpOver || !isSomewhereToLand || hasBeenHereBefore) {
+        continue;
+      }
+      const newMove = cloneMove(currentMoveData);
+      newMove.fullMovePath.push([newX, newY]);
+      const deeperMoves = recursiveSearchMoves(newX, newY, board, newMove, true);
+      for (const move of deeperMoves) {
+        validMoves.push(move);
+      }
+    }
+    if (hasJumped) {
+      const newMove = cloneMove(currentMoveData);
+      newMove.toX = pieceX;
+      newMove.toY = pieceY;
+      validMoves.push(newMove);
+    }
+    return validMoves;
+  };
+
+  // src/ai.ts
+  var findMove = (board, aiColor, difficulty) => {
+    if (countPlayerScore(aiColor, board) === 980) {
+      return void 0;
+    }
+    const moveDepthSearch = {
+      easy: 0,
+      medium: 1,
+      hard: 2
+    }[difficulty];
+    const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === aiColor);
+    let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
+    myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
+    let bestMoves = [];
+    let bestMoveScore = -Infinity;
+    const startTime = Date.now();
+    for (const move of myPiecesMoves) {
+      board.doMove(move);
+      let ourScore = 0;
+      const playerFinished = countPlayerScore(aiColor, board) === 980;
+      if (playerFinished) {
+        ourScore = evaluate(board, aiColor);
+      } else {
+        const opponentScore = recursiveBoardSearchAlphaBeta(
+          moveDepthSearch,
+          board,
+          aiColor === "white" ? "black" : "white",
+          -Infinity,
+          Infinity
+        );
+        ourScore = -opponentScore;
+      }
+      board.undoMove(move);
+      if (ourScore > bestMoveScore) {
+        bestMoveScore = ourScore;
+        bestMoves = [move];
+      } else if (ourScore === bestMoveScore) {
+        bestMoves.push(move);
+      }
+    }
+    const endTime = Date.now();
+    console.log(`Took ${endTime - startTime}ms to evaluate positions (difficulty=${difficulty})`);
+    console.log(`Evaluated ${TIMES_TO_EVAL} position`);
+    TIMES_TO_EVAL = 0;
+    console.log(`Choosing one of ${bestMoves.length} options`);
+    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+  };
+  var orderMoves = (moves, playerToMove) => {
+    return moves.sort((moveA, moveB) => {
+      return evaluateMove(moveA, playerToMove) - evaluateMove(moveB, playerToMove);
+    }).reverse();
+  };
+  var TIMES_TO_EVAL = 0;
+  var evaluateMove = (move, playerToMove) => {
+    TIMES_TO_EVAL++;
+    const oppositeCornerX = playerToMove === "black" ? 0 : 7;
+    const oppositeCornerY = playerToMove === "white" ? 7 : 0;
+    const initialDistance = Math.abs(move.fromX - oppositeCornerX) + Math.abs(move.fromY - oppositeCornerY);
+    const endingDistance = Math.abs(move.toX - oppositeCornerX) + Math.abs(move.toY - oppositeCornerY);
+    const moveScore = initialDistance - endingDistance;
+    return moveScore;
+  };
+  var recursiveBoardSearchAlphaBeta = (depth, board, playerToMove, alpha, beta) => {
+    const playerFinished = countPlayerScore(playerToMove, board) === 980;
+    if (depth === 0 || playerFinished) {
+      return evaluate(board, playerToMove);
+    }
+    const moves = generateAllMoves(board, playerToMove);
+    for (const move of moves) {
+      board.doMove(move);
+      const evaluation = -recursiveBoardSearchAlphaBeta(
+        depth - 1,
+        board,
+        playerToMove === "black" ? "white" : "black",
+        -beta,
+        -alpha
+      );
+      board.undoMove(move);
+      if (evaluation >= beta) {
+        return beta;
+      }
+      alpha = Math.max(alpha, evaluation);
+    }
+    return alpha;
+  };
+  var evaluate = (board, playerToMove) => {
+    const whiteScore = countPlayerScore("white", board);
+    const blackScore = countPlayerScore("black", board);
+    const evaluation = whiteScore - blackScore;
+    const perspective = playerToMove === "white" ? 1 : -1;
+    return evaluation * perspective;
+  };
+  var countPlayerScore = (player, board) => {
+    const oppositeCornerX = player === "black" ? 0 : 7;
+    const oppositeCornerY = player === "black" ? 7 : 0;
+    const myPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === player);
+    const myPiecesDistances = myPieces.map(
+      ([x, y]) => Math.abs(x - oppositeCornerX) + Math.abs(y - oppositeCornerY)
+    );
+    const cumulativeDistance = myPiecesDistances.reduce((a, b) => a + b, 0);
+    const score = 1e3 - cumulativeDistance;
+    return score;
+  };
+
+  // src/board.ts
+  var Board = class {
+    constructor(board) {
+      this.pieces = board;
+    }
+    getPiece(x, y) {
+      return this.pieces[x + y * 8];
+    }
+    setPiece(x, y, piece) {
+      this.pieces[x + y * 8] = piece;
+    }
+    getTileColor(x, y) {
+      return ["white", "black"][(x + y) % 2];
+    }
+    coordinates() {
+      const coordinates = [];
+      for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+          coordinates.push([x, y]);
+        }
+      }
+      return coordinates;
+    }
+    doMove(move) {
+      const pieceToMove = this.getPiece(move.fromX, move.fromY);
+      this.setPiece(move.fromX, move.fromY, "none");
+      this.setPiece(move.toX, move.toY, pieceToMove);
+    }
+    undoMove(move) {
+      const pieceToMove = this.getPiece(move.toX, move.toY);
+      this.setPiece(move.fromX, move.fromY, pieceToMove);
+      this.setPiece(move.toX, move.toY, "none");
+    }
+  };
+
+  // src/worker.ts
+  onmessage = (e) => {
+    const board = new Board(e.data[0]);
+    const move = findMove(board, e.data[1], e.data[2]);
+    postMessage(move);
+  };
+})();
