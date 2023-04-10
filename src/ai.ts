@@ -21,6 +21,9 @@ export const findMove = (
     let myPiecesMoves = myPieces.map(([x, y]) => generateAllMovesFromTile(x, y, board)).flat();
     myPiecesMoves = orderMoves(myPiecesMoves, aiColor);
 
+    const endGameScore = calculateEndGameScore(board);
+    console.log(`endgame score: ${endGameScore}`);
+
     let bestMoves: Move[] = [];
     let bestMoveScore = -Infinity;
 
@@ -66,6 +69,31 @@ export const findMove = (
 
     console.log(`Choosing one of ${bestMoves.length} options`);
     return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+};
+
+const calculateEndGameScore = (board: Board): number => {
+    const blackPieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === 'black');
+    const blackOppositePieces = blackPieces.filter((p) =>
+        pieceOnOppositeSide('black', p[0], p[1])
+    ).length;
+
+    const whitePieces = board.coordinates().filter(([x, y]) => board.getPiece(x, y) === 'white');
+    const whiteOppositePieces = whitePieces.filter((p) =>
+        pieceOnOppositeSide('white', p[0], p[1])
+    ).length;
+
+    const totalPieces = blackPieces.length + whitePieces.length;
+    const totalPiecesOpposite = blackOppositePieces + whiteOppositePieces;
+
+    return totalPiecesOpposite / totalPieces;
+};
+
+const pieceOnOppositeSide = (pieceColor: Piece, pieceX: number, pieceY: number) => {
+    if (pieceColor === 'black') {
+        return pieceX < pieceY;
+    } else {
+        return pieceX > pieceY;
+    }
 };
 
 /**
