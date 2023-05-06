@@ -96,7 +96,7 @@ export class InteractiveBoard {
 
             const pieceElement = document.createElement('div');
             const heartContainer = document.createElement('span');
-            heartContainer.innerText = '💗';
+            heartContainer.innerText = '❤️';
             pieceElement.appendChild(heartContainer);
 
             pieceElement.classList.add('piece');
