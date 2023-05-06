@@ -95,6 +95,10 @@ export class InteractiveBoard {
             this.board.setPiece(x, y, piece);
 
             const pieceElement = document.createElement('div');
+            const heartContainer = document.createElement('span');
+            heartContainer.innerText = '💗';
+            pieceElement.appendChild(heartContainer);
+
             pieceElement.classList.add('piece');
             pieceElement.dataset.pieceType = piece;
             pieceElement.dataset.x = x.toString();
