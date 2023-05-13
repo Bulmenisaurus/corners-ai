@@ -266,9 +266,6 @@
           if (this.board.getPiece(x, y) === "none") {
             this.board.setPiece(x, y, piece);
             const pieceElement = document.createElement("div");
-            const heartContainer = document.createElement("span");
-            heartContainer.innerText = "\u2764\uFE0F";
-            pieceElement.appendChild(heartContainer);
             pieceElement.classList.add("piece");
             pieceElement.dataset.pieceType = piece;
             pieceElement.dataset.x = x.toString();

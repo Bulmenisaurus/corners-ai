@@ -55,14 +55,9 @@ main {
     border-color: black;
 }
 
-#description,
-h2 {
+#description {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     padding: 20px;
-}
-
-#description {
-    display: none;
 }
 
 #board-container {
@@ -143,14 +138,6 @@ h2 {
 #board-container .piece[data-piece-type='white'] {
     background-color: white;
     border-color: black;
-}
-.piece {
-    display: grid;
-    place-items: center;
-}
-
-.piece span {
-    text-align: center;
 }
 
 #board-container .piece[data-piece-type='none'] {
